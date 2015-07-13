@@ -1,2 +1,2 @@
 # tools
-The tools used in GameGophers
+The tools used in gonet2
