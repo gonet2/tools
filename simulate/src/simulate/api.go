@@ -29,8 +29,8 @@ var Handlers map[int16]func(*Session, *packet.Packet) []byte
 
 func init() {
 	Handlers = map[int16]func(*Session, *packet.Packet) []byte{
-		0:  P_heart_beat_req,
-		1:  P_user_login_req,
-		30: P_get_seed_req,
+	//	0:  P_heart_beat_req,
+	//	1:  P_user_login_req,
+	//	30: P_get_seed_req,
 	}
 }

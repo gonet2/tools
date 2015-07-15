@@ -8,7 +8,13 @@ import (
 	"time"
 )
 
-var seqid = uint32(1)
+var (
+	seqid = uint32(0)
+)
+
+const (
+	DEFAULT_AGENT_HOST = "127.0.0.1:8888"
+)
 
 func checkErr(err error) {
 	if err != nil {
@@ -17,7 +23,11 @@ func checkErr(err error) {
 	}
 }
 func main() {
-	addr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:8888")
+	host := DEFAULT_AGENT_HOST
+	if env := os.Getenv("AGENT_HOST"); env != "" {
+		host = env
+	}
+	addr, err := net.ResolveTCPAddr("tcp", host)
 	if err != nil {
 		log.Println(err)
 		os.Exit(-1)
@@ -28,13 +38,9 @@ func main() {
 		os.Exit(-1)
 	}
 	defer conn.Close()
-
-	//send login
-	info := &user_login_info{
-		F_open_udid: "Robot agent",
-		F_login_way: 1,
+	for i := 0; i < 100; i++ {
+		send_proto(conn, Code["heart_beat_req"], nil)
 	}
-	send_proto(conn, Code["user_login_req"], info)
 }
 
 func send_proto(conn net.Conn, p int16, info interface{}) {
