@@ -19,7 +19,7 @@ gawk -f api_rcode.awk api.txt >> api.go
 printf "var Handlers map[int16]func(*Session, *packet.Packet) []byte\n" >> api.go
 printf "func init() {\n" >> api.go
 printf "Handlers = map[int16]func(*Session, *packet.Packet) []byte {\n" >> api.go
-gawk -f api_bind_req.awk api.txt >> api.go 
+gawk -v from=1 -v to=1000 -f api_bind_req.awk api.txt >> api.go 
 printf "}" >> api.go
 printf "}" >> api.go
 

@@ -21,7 +21,7 @@ BEGIN { RS = ""; FS ="\n" }
 		}
 	}
 
-	if ("packet_type" in array && "name" in array) {
+	if ("packet_type" in array && "name" in array && array["packet_type"] >= from && array["packet_type"] <= to) {
 		print "\t"array["packet_type"]":P_"array["name"]","
 	}
 
