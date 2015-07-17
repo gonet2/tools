@@ -1,7 +1,5 @@
 package main
 
-import "misc/packet"
-import . "types"
 
 var Code = map[string]int16{
 	"heart_beat_req":         0,    // 心跳包..
@@ -29,8 +27,5 @@ var RCode = map[int16]string{
 	1002: "proto_ping_ack",         //  ping回复
 }
 
-var Handlers map[int16]func(*Session, *packet.Packet) []byte
-
 func init() {
-	Handlers = map[int16]func(*Session, *packet.Packet) []byte{}
 }

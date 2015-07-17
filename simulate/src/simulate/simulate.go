@@ -43,12 +43,6 @@ func main() {
 	//heart_beat_req
 	send_proto(conn, Code["heart_beat_req"], nil)
 
-	//proto_ping_req
-	p1 := auto_id{
-		F_id: rand.Int31(),
-	}
-	send_proto(conn, Code["proto_ping_req"], p1)
-
 	//get_seed_req
 	p2 := seed_info{
 		F_client_send_seed:    rand.Int31(),
@@ -71,6 +65,13 @@ func main() {
 		F_login_ip:           "127.0.0.1",
 	}
 	send_proto(conn, Code["user_login_req"], p3)
+	
+	//proto_ping_req
+	p1 := auto_id{
+		F_id: rand.Int31(),
+	}
+	send_proto(conn, Code["proto_ping_req"], p1)
+
 }
 
 func send_proto(conn net.Conn, p int16, info interface{}) {
