@@ -2,9 +2,7 @@ package main
 
 import (
 	"crypto/rc4"
-	"encoding/binary"
 	"fmt"
-	"io"
 	"log"
 	"math/big"
 	"math/rand"
@@ -24,7 +22,7 @@ var (
 )
 
 const (
-	DEFAULT_AGENT_HOST = "127.0.0.1:8888"
+	DEFAULT_AGENT_HOST = "192.168.2.127:8888"
 )
 
 func checkErr(err error) {
@@ -100,37 +98,23 @@ func main() {
 
 }
 
-func send_proto(conn net.Conn, p int16, info interface{}) (reader *packet.Packet) {
+func send_proto(conn net.Conn, p int16, info interface{}) {
 	seqid++
 	payload := packet.Pack(p, info, nil)
 	writer := packet.Writer()
 	writer.WriteU16(uint16(len(payload)) + 4)
-	writer.WriteU32(seqid)
-	writer.WriteRawBytes(payload)
-	data := writer.Data()
-	log.Printf("%#v", data)
+
+	w := packet.Writer()
+	w.WriteU32(seqid)
+	w.WriteRawBytes(payload)
+	data := w.Data()
 	if KEY_EXCHANGE {
 		encoder.XORKeyStream(data, data)
 	}
-	conn.Write(data)
+	writer.WriteRawBytes(data)
+	conn.Write(writer.Data())
+	log.Printf("send : %#v", writer.Data())
 	time.Sleep(time.Second)
 
-	//read
-	header := make([]byte, 2)
-	io.ReadFull(conn, header)
-	size := binary.BigEndian.Uint16(header)
-	r := make([]byte, size)
-	_, err := io.ReadFull(conn, r)
-	if err != nil {
-		log.Println(err)
-	}
-	reader = packet.Reader(r)
-	b, err := reader.ReadS16()
-	if err != nil {
-		log.Println(err)
-	}
-	if _, ok := RCode[b]; !ok {
-		log.Println("unknown proto ", b)
-	}
 	return
 }
