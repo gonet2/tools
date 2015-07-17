@@ -11,13 +11,13 @@
 # 发布代码前请确保这些部分最新.
 #
 
-#公共结构， 用于只传id的结构
+#公共结构， 用于只传id,或一个数字的结构
 auto_id=
 id integer
 ===
 
 #一般性回复payload,0代表成功
-command_result_info=
+error_info=
 code integer
 msg string
 ===
@@ -38,7 +38,7 @@ login_ip string
 ===
 
 #通信加密种子
-pike_seed_info=
+seed_info=
 client_send_seed integer
 client_receive_seed integer
 ===
@@ -46,9 +46,6 @@ client_receive_seed integer
 #用户信息包
 user_snapshot=
 uid integer
-name string
-level integer 
-current_exp integer 
 ===
 
 
