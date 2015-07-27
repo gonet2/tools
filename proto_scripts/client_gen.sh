@@ -10,7 +10,7 @@ using System.Collections.Generic;\n"
 
 printf "${Head}namespace NetProto.Proto {\n" > proto.cs
 gawk -f client/proto.awk proto.txt >> proto.cs 
-gawk -f client/proto_func.awk proto.txt >> proto.cs 
+#gawk -f client/proto_func.awk proto.txt >> proto.cs 
 printf "}" >> proto.cs
 
 
