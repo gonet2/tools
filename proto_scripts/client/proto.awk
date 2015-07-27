@@ -31,7 +31,7 @@ print ""
 		print pack_code
 		print "\t}"
 		#reader
-		print "\tpublic  static "name" "name"(ByteArray reader){"
+		print "\tpublic  static "name" UnPack(ByteArray reader){"
 		print "\t\t"name " tbl = new " name "();"
 		print unpack_code
 		print "\t\treturn tbl;\n\t}"
