@@ -95,23 +95,23 @@ function _reader(line){
 			
 		} else if (a[3] in READERS) {	## primitives
 			
-			ret = ret "\tshort narr = reader.ReadU16();"
-			ret = ret "\tfor (int i = 0; i < narr; i++) {"
-			ret = ret "\t\tv := reader."READERS[a[3]]"();"
-			ret = ret "\t\ttbl."a[1]" = append(tbl."a[1]", v);"
-			ret = ret "\t}\n"
+			ret = ret "\tshort narr = reader.ReadU16();\n"
+			ret = ret "\t\tfor (int i = 0; i < narr; i++) {\n"
+			ret = ret "\t\t\ttbl."a[1]"[i] =reader."READERS[a[3]]"();\n"
+			#ret = ret "\t\t\ttbl."a[1]"[i] =  v;\n"
+			ret = ret "\t\t}"
 			
 		} else {	## struct
 			
-			ret = ret "\tshort narr = reader.ReadU16();"
-			ret = ret "\ttbl."a[1]" = new "a[3]"[narr];"
-			ret = ret "\tfor (int i = 0; i < narr; i++){"
-			ret = ret "\t\ttbl."a[1]"[i] = PKT_"a[3]"(reader);"
-			ret = ret "\t}\n"
+			ret = ret "\tshort narr = reader.ReadU16();\n"
+			ret = ret "\t\ttbl."a[1]" = new "a[3]"[narr];\n"
+			ret = ret "\t\tfor (int i = 0; i < narr; i++){\n"
+			ret = ret "\t\t\ttbl."a[1]"[i] = "a[3]".Unpack(reader);\n"
+			ret = ret "\t\t}"
 		
 		}
 	} else if (!(a[2] in READERS)) {
-		ret = ret "\t\ttbl."a[1]"  = new "a[2]"(reader);"
+		ret = ret "\ttbl."a[1]"  = "a[2]".UnPack(reader);"
 	} else {
 		ret = ret "\ttbl."a[1]"  = reader." READERS[a[2]] "();"
 	}
