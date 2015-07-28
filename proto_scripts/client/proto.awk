@@ -65,7 +65,7 @@ function _writer(line) {
 	if (a[2] in WRITERS) {
 		return "w." WRITERS[a[2]] "(this." a[1] ");\n"
 	} else if (a[2] == "array") {
-		ret = "w.WriteU16(uint16(len(this." a[1] ")));\n"
+		ret = "w.WriteUnsignedInt16((UInt16)this." a[1] ".Length);\n"
 		if (a[3] == "byte") {
 			ret = ret "w.WriteRawBytes(this."a[1]");\n"
 			return ret
@@ -74,8 +74,8 @@ function _writer(line) {
 				ret = ret "\t\tw." WRITERS[a[3]] "(this." a[1] "[k]);\n"
 			return ret "\t}\n"
 		} else {
-			ret = ret "\tforeach (int k in this." a[1] ") {\n"
-				ret = ret "\t\tthis."a[1]"[k].Pack(w);\n"
+			ret = ret "\tforeach ("a[3]" k in this." a[1] ") {\n"
+				ret = ret "\t\tk.Pack(w);\n"
 			return ret "\t}\n"
 		}
 	} else {
@@ -95,7 +95,7 @@ function _reader(line){
 			
 		} else if (a[3] in READERS) {	## primitives
 			
-			ret = ret "\tshort narr = reader.ReadU16();\n"
+			ret = ret "\tUInt16 narr = reader.ReadUnsignedInt16();\n"
 			ret = ret "\t\tfor (int i = 0; i < narr; i++) {\n"
 			ret = ret "\t\t\ttbl."a[1]"[i] =reader."READERS[a[3]]"();\n"
 			#ret = ret "\t\t\ttbl."a[1]"[i] =  v;\n"
@@ -103,10 +103,10 @@ function _reader(line){
 			
 		} else {	## struct
 			
-			ret = ret "\tshort narr = reader.ReadU16();\n"
+			ret = ret "\tUInt16 narr = reader.ReadUnsignedInt16();\n"
 			ret = ret "\t\ttbl."a[1]" = new "a[3]"[narr];\n"
 			ret = ret "\t\tfor (int i = 0; i < narr; i++){\n"
-			ret = ret "\t\t\ttbl."a[1]"[i] = "a[3]".Unpack(reader);\n"
+			ret = ret "\t\t\ttbl."a[1]"[i] = "a[3]".UnPack(reader);\n"
 			ret = ret "\t\t}"
 		
 		}
