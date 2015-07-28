@@ -36,5 +36,5 @@ print "public Dictionary<string, ushort> Code = new Dictionary<string, ushort>()
 	delete array
 }
 END {
-print "}\n"
+print "};\n"
 }

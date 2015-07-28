@@ -30,5 +30,5 @@ print "public Dictionary<ushort, string> RCode = new Dictionary<ushort, string>(
 	delete array
 }
 END {
-print "}\n"	
+print "};\n"	
 }
