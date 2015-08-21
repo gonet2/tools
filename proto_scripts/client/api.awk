@@ -6,9 +6,8 @@
 ## payload:null
 ## desc:心跳包..
 ##
-BEGIN { RS = ""; FS ="\n" 
-print "public class Api {\n"
-print "public Dictionary<string, ushort> Code = new Dictionary<string, ushort>(){"
+BEGIN { RS = ""; FS ="\n"
+print "public enum ENetMsgId {"
 }
 {
 	for (i=1;i<=NF;i++)
@@ -30,7 +29,7 @@ print "public Dictionary<string, ushort> Code = new Dictionary<string, ushort>()
 	}
 
 	if ("packet_type" in array && "name" in array) {
-		print "\t{\""array["name"]"\",\t"array["packet_type"]"},\t// "array["desc"]
+		print "\t"array["name"]"\t= "array["packet_type"]",\t// "array["desc"]
 	}
 
 	delete array

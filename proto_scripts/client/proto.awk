@@ -3,7 +3,10 @@
 ##
 @include "client/header.awk"
 BEGIN { RS = "==="; FS ="\n" 
-print ""
+print "\npublic abstract class NetBase{"
+print "\tpublic ushort NetMsgId;"
+print "\tpublic abstract void Pack(ByteArray w);"
+print "}\n"
 }
 {
 
@@ -13,7 +16,7 @@ print ""
 	{
 		if ($i ~ /[A-Za-z_]+=/) {
 			name = substr($i,1, match($i,/=/)-1)
-			print "\npublic class " name " {"
+			print "\npublic class " name " : NetBase {"
 			typeok = "true"
 		} else {
 			if ($i!="" && typeok) {	
@@ -27,11 +30,12 @@ print ""
 
 	if (typeok) {
 		#writer
-		print "\n\tpublic void Pack(ByteArray w) {"
+		print "\n\tpublic override void Pack(ByteArray w) {"
 		print pack_code
 		print "\t}"
 		#reader
 		print "\tpublic  static "name" UnPack(ByteArray reader){"
+		print "\t\tUInt16 narr = 0;"
 		print "\t\t"name " tbl = new " name "();"
 		print unpack_code
 		print "\t\treturn tbl;\n\t}"
@@ -95,7 +99,8 @@ function _reader(line){
 			
 		} else if (a[3] in READERS) {	## primitives
 			
-			ret = ret "\tUInt16 narr = reader.ReadUnsignedInt16();\n"
+			ret = ret "\tnarr = reader.ReadUnsignedInt16();\n"
+			ret = ret "\t\ttbl."a[1]" = new "TYPES[a[3]]"[narr];\n"
 			ret = ret "\t\tfor (int i = 0; i < narr; i++) {\n"
 			ret = ret "\t\t\ttbl."a[1]"[i] =reader."READERS[a[3]]"();\n"
 			#ret = ret "\t\t\ttbl."a[1]"[i] =  v;\n"
@@ -103,7 +108,7 @@ function _reader(line){
 			
 		} else {	## struct
 			
-			ret = ret "\tUInt16 narr = reader.ReadUnsignedInt16();\n"
+			ret = ret "\tnarr = reader.ReadUnsignedInt16();\n"
 			ret = ret "\t\ttbl."a[1]" = new "a[3]"[narr];\n"
 			ret = ret "\t\tfor (int i = 0; i < narr; i++){\n"
 			ret = ret "\t\t\ttbl."a[1]"[i] = "a[3]".UnPack(reader);\n"

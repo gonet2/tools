@@ -5,12 +5,12 @@
 
 packet_type:0
 name:heart_beat_req
-payload:null
+payload:auto_id
 desc:心跳包..
 
 packet_type:1
 name:heart_beat_ack
-payload:null
+payload:auto_id
 desc:心跳包回复
 
 packet_type:10
