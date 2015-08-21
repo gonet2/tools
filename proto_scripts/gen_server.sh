@@ -4,8 +4,10 @@
 ###   client proto & api
 ##################################################
 #modify the path to your self path.
-export PATH_AGENT=/go/gonet2/agent
-export PATH_GAME=/go/gonet2/game
+#export PATH_AGENT=/go/gonet2/agent/src/client_handler
+#export PATH_GAME=/go/gonet2/game/src/client_handler
+export PATH_AGENT=./proto_code/
+export PATH_GAME=./proto_code/
 
 printf "package client_handler\n" > proto.go
 gawk -f server/proto.awk proto.txt >> proto.go 
@@ -28,15 +30,15 @@ if [ "$1" = "agent" ]; then
 	printf "}" >> api.go
 	printf "}" >> api.go
 	go fmt ./
-	mv -f proto.go $PATH_AGENT/src/client_handler
-	mv -f api.go $PATH_AGENT/src/client_handler
+	mv -f proto.go $PATH_AGENT
+	mv -f api.go $PATH_AGENT
 
 else
 	gawk -v from=1001 -v to=65535 -f server/api_bind_req.awk api.txt >> api.go 
 	printf "}" >> api.go
 	printf "}" >> api.go
 	go fmt ./
-	mv -f proto.go $PATH_GAME/src/client_handler
-	mv -f api.go $PATH_GAME/src/client_handler
+	mv -f proto.go $PATH_GAME
+	mv -f api.go $PATH_GAME
 fi
 
