@@ -39,12 +39,10 @@ BEGIN { RS = ""; FS ="\n"}
 				print "\t}\n"
 				print "\t}\n"
 			}
-		}
-		else if (!(a[2] in READERS)) {
+		} else if (!(a[2] in READERS)) {
 			print "\t\ttbl.F_"a[1]", err = PKT_"a[2]"(reader)"
 			print "\tcheckErr(err)\n"
-		}
-		else {
+		} else {
 			print "\ttbl.F_"a[1]",err = reader." READERS[a[2]] "()"
 			print "\tcheckErr(err)\n"
 		}

@@ -2,6 +2,7 @@
 BEGIN {
 	## READERS
 	READERS["byte"]="ReadByte"
+	READERS["bytes"]="ReadBytes"
 	READERS["short"]="ReadS16"
 	READERS["int16"]="ReadS16"
 	READERS["uint16"]="ReadU16"
@@ -20,6 +21,7 @@ BEGIN {
 	READERS["float64"]="ReadFloat64"
 	## WRITERS
 	WRITERS["byte"]="WriteByte"
+	WRITERS["bytes"]="WriteBytes"
 	WRITERS["short"]="WriteS16"
 	WRITERS["int16"]="WriteS16"
 	WRITERS["uint16"]="WriteU16"
@@ -38,6 +40,7 @@ BEGIN {
 	WRITERS["float64"]="WriteFloat64"
 	## 类型映射
 	TYPES["byte"]="byte"
+	TYPES["bytes"]="[]byte"
 	TYPES["short"]="int16"
 	TYPES["int16"]="int16"
 	TYPES["uint16"]="uint16"
