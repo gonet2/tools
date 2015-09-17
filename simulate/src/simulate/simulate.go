@@ -93,13 +93,16 @@ func main() {
 	send_proto(conn, Code["user_login_req"], p3)
 
 	//heart_beat_req
-	send_proto(conn, Code["heart_beat_req"], nil)
-
-	//proto_ping_req
-	p1 := auto_id{
+	p4 := auto_id{
 		F_id: rand.Int31(),
 	}
-	send_proto(conn, Code["proto_ping_req"], p1)
+	send_proto(conn, Code["heart_beat_req"], p4)
+
+	//proto_ping_req
+	p5 := auto_id{
+		F_id: rand.Int31(),
+	}
+	send_proto(conn, Code["proto_ping_req"], p5)
 
 }
 

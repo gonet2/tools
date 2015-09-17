@@ -28,5 +28,5 @@ BEGIN { RS = ""; FS ="\n" }
 	delete array
 }
 END {
-print "}\n"
+print "};\n"
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/bitly/go-nsq"
 	"github.com/codegangsta/cli"
-	. "github.com/xtaci/nsq-logger"
+	. "github.com/gonet2/libs/nsq-logger"
 	"os"
 	"os/signal"
 	"strings"
