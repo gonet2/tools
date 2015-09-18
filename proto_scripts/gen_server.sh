@@ -8,6 +8,11 @@
 #export PATH_GAME=/go/gonet2/game/src/client_handler
 export PATH_AGENT=./proto_code/
 export PATH_GAME=./proto_code/
+if [ "$1" = "agent" ]; then
+	echo "generating proto stub for agent:\n"
+else
+	echo "generating proto stub for game:\n"
+fi
 
 printf "package client_handler\n" > proto.go
 gawk -f server/proto.awk proto.txt >> proto.go 
@@ -42,3 +47,6 @@ else
 	mv -f api.go $PATH_GAME
 fi
 
+echo "=============="
+echo "Completed.\n"
+echo "Please copy these file from $PATH_GAME into related 'client_handler/'\n"
