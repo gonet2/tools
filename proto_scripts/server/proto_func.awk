@@ -12,7 +12,7 @@ BEGIN { RS = ""; FS ="\n"}
 		split($i, a, " ")
 		if (a[1] ~ /[A-Za-z_]+=/) {
 			name = substr(a[1],1, match(a[1],/=/)-1)
-			print "func PKT_"name"(reader *packet.Packet)(tbl "name", err error){"
+			print "func PKT_"name"(reader *packet.Packet)(tbl S_"name", err error){"
 			typeok = "true"
 		} else if (a[2] ==  "array") {
 			if (a[3] == "byte") { 		## bytes
@@ -32,7 +32,7 @@ BEGIN { RS = ""; FS ="\n"}
 				print "\t{"
 				print "\tnarr,err := reader.ReadU16()"
 				print "\tcheckErr(err)\n"
-				print "\ttbl.F_"a[1]"=make([]"a[3]",narr)"
+				print "\ttbl.F_"a[1]"=make([]S_"a[3]",narr)"
 				print "\tfor i:=0;i<int(narr);i++ {"
 				print "\t\ttbl.F_"a[1]"[i], err = PKT_"a[3]"(reader)"
 				print "\t\tcheckErr(err)\n"
@@ -55,4 +55,9 @@ BEGIN { RS = ""; FS ="\n"}
 
 	typeok=false
 }
-END { }
+END {
+print "func checkErr(err error) {"
+print "	if err != nil {"
+print "panic(\"error occured in protocol module\")"
+print "	}}"
+}

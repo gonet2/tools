@@ -49,4 +49,4 @@ fi
 
 echo "=============="
 echo "Completed.\n"
-echo "Please copy these file from $PATH_GAME into related 'client_handler/'\n"
+echo "Please copy these file from $PATH_GAME into client_handler/\n"

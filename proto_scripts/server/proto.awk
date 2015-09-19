@@ -12,7 +12,7 @@ print "import \"misc/packet\"\n"
 	for (i=1;i<=NF;i++)
 	{
 		if ($i ~ /[A-Za-z_]+=/) {
-			name = substr($i,1, match($i,/=/)-1)
+			name = "S_"substr($i,1, match($i,/=/)-1)
 			print "type " name " struct {"
 			typeok = "true"
 		} else {
@@ -43,10 +43,10 @@ function _field(line) {
 		if (a[3] in TYPES) {
 			return "\tF_"a[1]" []" TYPES[a[3]]
 		} else {
-			return "\tF_"a[1]" []" a[3]
+			return "\tF_"a[1]" []S_" a[3]
 		}
 	} else {
-		return "\tF_"a[1]" " a[2]
+		return "\tF_"a[1]" S_"a[2]
 	}
 }
 
