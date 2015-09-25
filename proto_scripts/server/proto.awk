@@ -11,6 +11,9 @@ print "import \"misc/packet\"\n"
 	pack_code = ""
 	for (i=1;i<=NF;i++)
 	{
+		if ($i ~ /^#/) {
+			print "//" $i
+		}
 		if ($i ~ /[A-Za-z_]+=/) {
 			name = "S_"substr($i,1, match($i,/=/)-1)
 			print "type " name " struct {"
