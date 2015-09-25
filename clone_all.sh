@@ -15,4 +15,5 @@ git clone git@github.com:gonet2/geoip.git
 git clone git@github.com:gonet2/arch.git
 git clone git@github.com:gonet2/bgsave.git
 git clone git@github.com:gonet2/wordfilter.git
+git clone git@github.com:gonet2/tools.git
 
