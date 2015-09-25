@@ -14,9 +14,12 @@ print "}\n"
 	unpack_code = ""
 	for (i=1;i<=NF;i++)
 	{
+		if ($i ~ /^#/) {
+			print "\n//" $i
+		}
 		if ($i ~ /[A-Za-z_]+=/) {
 			name = substr($i,1, match($i,/=/)-1)
-			print "\npublic class " name " : NetBase {"
+			print "public class " name " : NetBase {"
 			typeok = "true"
 		} else {
 			if ($i!="" && typeok) {	
@@ -35,7 +38,7 @@ print "}\n"
 		print "\t}"
 		#reader
 		print "\tpublic  static "name" UnPack(ByteArray reader){"
-		print "\t\tUInt16 narr = 0;"
+		#print "\t\tUInt16 narr = 0;"
 		print "\t\t"name " tbl = new " name "();"
 		print unpack_code
 		print "\t\treturn tbl;\n\t}"
@@ -74,9 +77,9 @@ function _writer(line) {
 			ret = ret "w.WriteRawBytes(this."a[1]");\n"
 			return ret
 		} else if (a[3] in TYPES) {
-			ret = ret "\tforeach (int k in this." a[1] ") {\n"
-				ret = ret "\t\tw." WRITERS[a[3]] "(this." a[1] "[k]);\n"
-			return ret "\t}\n"
+			ret = ret "\t\tfor(int k = 0; k < this." a[1] ".Length; k++) {\n"
+				ret = ret "\t\t\tw." WRITERS[a[3]] "(this." a[1] "[k]);\n"
+			return ret "\t\t}\n"
 		} else {
 			ret = ret "\tforeach ("a[3]" k in this." a[1] ") {\n"
 				ret = ret "\t\tk.Pack(w);\n"
@@ -98,20 +101,22 @@ function _reader(line){
 			ret = ret "\ttbl."a[1]" = reader.ReadBytes();"
 			
 		} else if (a[3] in READERS) {	## primitives
-			
-			ret = ret "\tnarr = reader.ReadUnsignedInt16();\n"
+			ret = ret "\t{\n"
+			ret = ret "\t\tUInt16 narr = reader.ReadUnsignedInt16();\n"
 			ret = ret "\t\ttbl."a[1]" = new "TYPES[a[3]]"[narr];\n"
 			ret = ret "\t\tfor (int i = 0; i < narr; i++) {\n"
 			ret = ret "\t\t\ttbl."a[1]"[i] =reader."READERS[a[3]]"();\n"
 			#ret = ret "\t\t\ttbl."a[1]"[i] =  v;\n"
+			ret = ret "\t\t}\n"
 			ret = ret "\t\t}"
 			
 		} else {	## struct
-			
-			ret = ret "\tnarr = reader.ReadUnsignedInt16();\n"
+			ret = ret "\t{\n"
+			ret = ret "\t\tUInt16 narr = reader.ReadUnsignedInt16();\n"
 			ret = ret "\t\ttbl."a[1]" = new "a[3]"[narr];\n"
 			ret = ret "\t\tfor (int i = 0; i < narr; i++){\n"
 			ret = ret "\t\t\ttbl."a[1]"[i] = "a[3]".UnPack(reader);\n"
+			ret = ret "\t\t}\n"
 			ret = ret "\t\t}"
 		
 		}
