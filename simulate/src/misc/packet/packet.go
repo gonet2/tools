@@ -57,6 +57,26 @@ func (p *Packet) ReadByte() (ret byte, err error) {
 	return
 }
 
+func (p *Packet) ReadS8() (ret int8, err error) {
+	if p.pos >= len(p.data) {
+		err = errors.New("read byte failed")
+		return
+	}
+
+	ret = int8(p.data[p.pos])
+	p.pos++
+	return
+}
+func (p *Packet) ReadU8() (ret uint8, err error) {
+	if p.pos >= len(p.data) {
+		err = errors.New("read byte failed")
+		return
+	}
+
+	ret = uint8(p.data[p.pos])
+	p.pos++
+	return
+}
 func (p *Packet) ReadBytes() (ret []byte, err error) {
 	if p.pos+2 > len(p.data) {
 		err = errors.New("read bytes header failed")
@@ -215,6 +235,12 @@ func (p *Packet) WriteBool(v bool) {
 
 func (p *Packet) WriteByte(v byte) {
 	p.data = append(p.data, v)
+}
+func (p *Packet) WriteU8(v uint8) {
+	p.data = append(p.data, byte(v))
+}
+func (p *Packet) WriteS8(v int8) {
+	p.data = append(p.data, byte(v))
 }
 
 func (p *Packet) WriteBytes(v []byte) {

@@ -16,6 +16,16 @@ auto_id=
 id integer
 ===
 
+#test 
+foo=
+id integer
+foo_bytes bytes
+foo_string string
+foo_byte byte
+foo_uint8 uint8
+foo_int8 int8
+===
+
 #一般性回复payload,0代表成功
 error_info=
 code integer
