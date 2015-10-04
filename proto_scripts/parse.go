@@ -70,7 +70,9 @@ func (lex *Lexer) keyword() *token {
 		r, _, err = lex.reader.ReadRune()
 		if err == io.EOF {
 			break
-		} else if r == ':' {
+		} else if unicode.IsLetter(r) || unicode.IsNumber(r) || r == '_' {
+			continue
+		} else {
 			lex.reader.UnreadRune()
 			break
 		}
