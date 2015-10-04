@@ -89,6 +89,8 @@ func (lex *Lexer) keyword() *token {
 		t.typ = PAYLOAD
 	case "desc":
 		t.typ = DESC
+	default:
+		log.Fatal(SYNTAX_ERROR)
 	}
 	return t
 }
