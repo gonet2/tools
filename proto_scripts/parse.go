@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"io"
@@ -34,10 +33,11 @@ type api_expr struct {
 type token struct {
 	typ     int
 	literal string
+	r       rune
 }
 
 type Lexer struct {
-	reader *bufio.Reader
+	reader *bytes.Buffer
 }
 
 func (lex *Lexer) init(r io.Reader) {
@@ -47,8 +47,8 @@ func (lex *Lexer) init(r io.Reader) {
 	}
 
 	re := regexp.MustCompile("(?m:^#(.*)$)")
-	bts = re.ReplaceAllLiteral(bts, []byte("\n"))
-	lex.reader = bufio.NewReader(bytes.NewBuffer(bts))
+	bts = re.ReplaceAllLiteral(bts, nil)
+	lex.reader = bytes.NewBuffer(bts)
 }
 
 func (lex *Lexer) keyword() *token {
@@ -56,23 +56,21 @@ func (lex *Lexer) keyword() *token {
 	var err error
 	for {
 		r, _, err = lex.reader.ReadRune()
-		if err != nil {
+		if err == io.EOF {
 			return nil
-		}
-		if unicode.IsSpace(r) {
+		} else if unicode.IsSpace(r) {
 			continue
-		} else {
-			break
 		}
+		break
 	}
 
 	var runes []rune
 	for {
 		runes = append(runes, r)
 		r, _, err = lex.reader.ReadRune()
-		if r != ':' {
-			continue
-		} else {
+		if err == io.EOF {
+			break
+		} else if r == ':' {
 			lex.reader.UnreadRune()
 			break
 		}
@@ -88,42 +86,72 @@ func (lex *Lexer) keyword() *token {
 		t.typ = PAYLOAD
 	case "desc":
 		t.typ = DESC
-	default:
-		t.typ = LITERAL
 	}
 	return t
 }
 
 func (lex *Lexer) r() *token {
-	t := &token{}
-	r, _, err := lex.reader.ReadRune()
-	if err != nil {
-		return nil
+	var r rune
+	var err error
+	for {
+		r, _, err = lex.reader.ReadRune()
+		if err == io.EOF {
+			return nil
+		} else if unicode.IsSpace(r) {
+			continue
+		}
+		break
 	}
-	t.literal = string(r)
+
+	t := &token{}
+	t.r = r
 	return t
 }
 
 func (lex *Lexer) str() *token {
 	var r rune
 	var err error
-	var runes []rune
-	t := &token{}
 	for {
 		r, _, err = lex.reader.ReadRune()
-		if err != nil {
+		if err == io.EOF {
 			return nil
-		}
-		if r != '\r' && r != '\n' {
-			runes = append(runes, r)
+		} else if unicode.IsSpace(r) {
 			continue
-		} else {
-			lex.reader.UnreadRune()
+		}
+		break
+	}
+
+	var runes []rune
+	for {
+		runes = append(runes, r)
+		r, _, err = lex.reader.ReadRune()
+		if err == io.EOF {
+			break
+		} else if r == '\r' || r == '\n' {
 			break
 		}
 	}
+
+	t := &token{}
 	t.literal = string(runes)
 	return t
+}
+
+func (lex *Lexer) eof() bool {
+	for {
+		r, _, err := lex.reader.ReadRune()
+		if err == io.EOF {
+			log.Println(r, err)
+			return true
+		} else if unicode.IsSpace(r) {
+			continue
+		} else {
+			lex.reader.UnreadRune()
+			return false
+		}
+	}
+
+	return true
 }
 
 //////////////////////////////////////////////////////////////
@@ -134,6 +162,14 @@ type Parser struct {
 
 func (p *Parser) init(lex *Lexer) {
 	p.lexer = lex
+}
+
+func (p *Parser) match(r rune) {
+	t := p.lexer.r()
+	check(t)
+	if t.r != r {
+		log.Fatal(SYNTAX_ERROR)
+	}
 }
 
 func (p *Parser) packet_type() {
@@ -166,31 +202,38 @@ func (p *Parser) desc() {
 	}
 }
 
+func (p *Parser) literal() string {
+	t := p.lexer.str()
+	check(t)
+	return t.literal
+}
+
 func (p *Parser) expr() bool {
 	api := api_expr{}
+	if p.lexer.eof() {
+		return false
+	}
 	p.packet_type()
-	p.lexer.r()
-	api.packet_type = p.lexer.str().literal
+	p.match(':')
+	api.packet_type = p.literal()
 	p.name()
-	p.lexer.r()
-	api.name = p.lexer.str().literal
+	p.match(':')
+	api.name = p.literal()
 	p.payload()
-	p.lexer.r()
-	api.payload = p.lexer.str().literal
+	p.match(':')
+	api.payload = p.literal()
 	p.desc()
-	p.lexer.r()
-	api.desc = p.lexer.str().literal
+	p.match(':')
+	api.desc = p.literal()
 
 	p.exprs = append(p.exprs, api)
-	return false
+	return true
 }
 
 func check(t *token) {
 	if t == nil {
 		log.Fatal(SYNTAX_ERROR)
 	}
-
-	log.Println(t)
 }
 
 func main() {
@@ -200,6 +243,5 @@ func main() {
 	p.init(&lexer)
 	for p.expr() {
 	}
-
 	log.Println(p.exprs)
 }
