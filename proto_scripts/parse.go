@@ -46,6 +46,7 @@ func (lex *Lexer) init(r io.Reader) {
 		log.Println(err)
 	}
 
+	// 清除注释
 	re := regexp.MustCompile("(?m:^#(.*)$)")
 	bts = re.ReplaceAllLiteral(bts, nil)
 	lex.reader = bytes.NewBuffer(bts)
