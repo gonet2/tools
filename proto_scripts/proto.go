@@ -16,6 +16,7 @@ const (
 	STRUCT_BEGIN
 	STRUCT_END
 	DATA_TYPE
+	ARRAY_TYPE
 )
 
 var (
@@ -30,7 +31,7 @@ var (
 	SYNTAX_ERROR = errors.New("syntax error")
 )
 
-type field struct {
+type field_info struct {
 	name  string
 	typ   string
 	array bool
@@ -38,7 +39,7 @@ type field struct {
 
 type struct_info struct {
 	name   string
-	fields []field
+	fields []field_info
 }
 
 type token struct {
@@ -65,7 +66,7 @@ func (lex *Lexer) init(r io.Reader) {
 
 func (lex *Lexer) next() (t *token) {
 	defer func() {
-		log.Println(t)
+		//log.Println(t)
 	}()
 	var r rune
 	var err error
@@ -110,6 +111,8 @@ func (lex *Lexer) next() (t *token) {
 		t.literal = string(runes)
 		if datatypes[t.literal] {
 			t.typ = DATA_TYPE
+		} else if t.literal == "array" {
+			t.typ = ARRAY_TYPE
 		} else {
 			t.typ = SYMBOL
 		}
@@ -139,6 +142,7 @@ func (lex *Lexer) eof() bool {
 //////////////////////////////////////////////////////////////
 type Parser struct {
 	lexer *Lexer
+	info  []struct_info
 }
 
 func (p *Parser) init(lex *Lexer) {
@@ -149,10 +153,13 @@ func (p *Parser) expr() bool {
 	if p.lexer.eof() {
 		return false
 	}
+
+	info := struct_info{}
 	if t := p.lexer.next(); t != nil {
 		if t.typ != SYMBOL {
 			syntax_error()
 		}
+		info.name = t.literal
 	}
 
 	if t := p.lexer.next(); t != nil {
@@ -160,28 +167,42 @@ func (p *Parser) expr() bool {
 			syntax_error()
 		}
 	}
-	t := p.fields()
+	t := p.fields(&info)
 	if t != nil {
 		if t.typ != STRUCT_END {
 			syntax_error()
 		}
 	}
 
+	p.info = append(p.info, info)
 	return true
 }
 
-func (p *Parser) fields() *token {
+func (p *Parser) fields(info *struct_info) *token {
 	for {
+		field := field_info{}
 		if t := p.lexer.next(); t != nil {
 			if t.typ != SYMBOL {
 				return t
 			}
+			field.name = t.literal
 		}
 
 		if t := p.lexer.next(); t != nil {
-			if t.typ != DATA_TYPE {
+			if t.typ == ARRAY_TYPE {
+				field.array = true
+				if t := p.lexer.next(); t != nil {
+					if t.typ == SYMBOL {
+						field.typ = t.literal
+					}
+				}
+			} else if t.typ == DATA_TYPE || t.typ == SYMBOL {
+				field.typ = t.literal
+			} else {
 				syntax_error()
 			}
+
+			info.fields = append(info.fields, field)
 		}
 	}
 }
@@ -203,4 +224,6 @@ func main() {
 	p.init(&lexer)
 	for p.expr() {
 	}
+
+	log.Println(p.info)
 }
