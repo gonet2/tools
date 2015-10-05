@@ -8,32 +8,51 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strconv"
 	"unicode"
 )
 
 const (
-	PACKET_TYPE = iota
-	NAME
-	PAYLOAD
-	DESC
-	LITERAL
+	TK_TYPE = iota
+	TK_NAME
+	TK_PAYLOAD
+	TK_COLON
+	TK_STRING
+	TK_NUMBER
+	TK_EOF
+)
+
+var (
+	keywords = map[string]int{
+		"packet_type": TK_TYPE,
+		"name":        TK_NAME,
+		"payload":     TK_PAYLOAD,
+	}
 )
 
 var (
 	SYNTAX_ERROR = errors.New("syntax error")
 )
 
+var (
+	TOKEN_EOF   = &token{typ: TK_EOF}
+	TOKEN_COLON = &token{typ: TK_COLON}
+)
+
 type api_expr struct {
-	packet_type string
+	packet_type int
 	name        string
 	payload     string
-	desc        string
 }
 
 type token struct {
 	typ     int
 	literal string
-	r       rune
+	number  int
+}
+
+func syntax_error() {
+	log.Fatal(SYNTAX_ERROR)
 }
 
 type Lexer struct {
@@ -49,16 +68,22 @@ func (lex *Lexer) init(r io.Reader) {
 	// 清除注释
 	re := regexp.MustCompile("(?m:^#(.*)$)")
 	bts = re.ReplaceAllLiteral(bts, nil)
+	// 清除desc
+	re = regexp.MustCompile("(?m:^desc:(.*)$)")
+	bts = re.ReplaceAllLiteral(bts, nil)
 	lex.reader = bytes.NewBuffer(bts)
 }
 
-func (lex *Lexer) keyword() *token {
+func (lex *Lexer) next() (t *token) {
+	defer func() {
+		//	log.Println(t)
+	}()
 	var r rune
 	var err error
 	for {
 		r, _, err = lex.reader.ReadRune()
 		if err == io.EOF {
-			return nil
+			return TOKEN_EOF
 		} else if unicode.IsSpace(r) {
 			continue
 		}
@@ -66,97 +91,51 @@ func (lex *Lexer) keyword() *token {
 	}
 
 	var runes []rune
-	for {
-		runes = append(runes, r)
-		r, _, err = lex.reader.ReadRune()
-		if err == io.EOF {
-			break
-		} else if unicode.IsLetter(r) || unicode.IsNumber(r) || r == '_' {
-			continue
+	if unicode.IsLetter(r) {
+		for {
+			runes = append(runes, r)
+			r, _, err = lex.reader.ReadRune()
+			if err == io.EOF {
+				break
+			} else if unicode.IsLetter(r) || unicode.IsNumber(r) || r == '_' {
+				continue
+			} else {
+				lex.reader.UnreadRune()
+				break
+			}
+		}
+		t := &token{}
+		if tkid, ok := keywords[string(runes)]; ok {
+			t.typ = tkid
 		} else {
-			lex.reader.UnreadRune()
-			break
+			t.typ = TK_STRING
+			t.literal = string(runes)
 		}
-	}
-	t := &token{}
-	t.literal = string(runes)
-	switch t.literal {
-	case "packet_type":
-		t.typ = PACKET_TYPE
-	case "name":
-		t.typ = NAME
-	case "payload":
-		t.typ = PAYLOAD
-	case "desc":
-		t.typ = DESC
-	default:
-		log.Fatal(SYNTAX_ERROR)
-	}
-	return t
-}
-
-func (lex *Lexer) r() *token {
-	var r rune
-	var err error
-	for {
-		r, _, err = lex.reader.ReadRune()
-		if err == io.EOF {
-			return nil
-		} else if unicode.IsSpace(r) {
-			continue
+		return t
+	} else if unicode.IsNumber(r) {
+		for {
+			runes = append(runes, r)
+			r, _, err = lex.reader.ReadRune()
+			if err == io.EOF {
+				break
+			} else if unicode.IsNumber(r) {
+				continue
+			} else {
+				lex.reader.UnreadRune()
+				break
+			}
 		}
-		break
+		t := &token{}
+		t.typ = TK_NUMBER
+		n, _ := strconv.Atoi(string(runes))
+		t.number = n
+		return t
+	} else if r == ':' {
+		return TOKEN_COLON
+	} else {
+		syntax_error()
 	}
-
-	t := &token{}
-	t.r = r
-	return t
-}
-
-func (lex *Lexer) str() *token {
-	var r rune
-	var err error
-	for {
-		r, _, err = lex.reader.ReadRune()
-		if err == io.EOF {
-			return nil
-		} else if unicode.IsSpace(r) {
-			continue
-		}
-		break
-	}
-
-	var runes []rune
-	for {
-		runes = append(runes, r)
-		r, _, err = lex.reader.ReadRune()
-		if err == io.EOF {
-			break
-		} else if r == '\r' || r == '\n' {
-			break
-		}
-	}
-
-	t := &token{}
-	t.literal = string(runes)
-	return t
-}
-
-func (lex *Lexer) eof() bool {
-	for {
-		r, _, err := lex.reader.ReadRune()
-		if err == io.EOF {
-			log.Println(r, err)
-			return true
-		} else if unicode.IsSpace(r) {
-			continue
-		} else {
-			lex.reader.UnreadRune()
-			return false
-		}
-	}
-
-	return true
+	return TOKEN_EOF
 }
 
 //////////////////////////////////////////////////////////////
@@ -169,76 +148,43 @@ func (p *Parser) init(lex *Lexer) {
 	p.lexer = lex
 }
 
-func (p *Parser) match(r rune) {
-	t := p.lexer.r()
-	check(t)
-	if t.r != r {
-		log.Fatal(SYNTAX_ERROR)
-	}
-}
-
-func (p *Parser) packet_type() {
-	t := p.lexer.keyword()
-	check(t)
-	if t.typ != PACKET_TYPE {
-		log.Fatal(SYNTAX_ERROR)
-	}
-}
-
-func (p *Parser) name() {
-	t := p.lexer.keyword()
-	check(t)
-	if t.typ != NAME {
-		log.Fatal(SYNTAX_ERROR)
-	}
-}
-func (p *Parser) payload() {
-	t := p.lexer.keyword()
-	check(t)
-	if t.typ != PAYLOAD {
-		log.Fatal(SYNTAX_ERROR)
-	}
-}
-func (p *Parser) desc() {
-	t := p.lexer.keyword()
-	check(t)
-	if t.typ != DESC {
-		log.Fatal(SYNTAX_ERROR)
-	}
-}
-
-func (p *Parser) literal() string {
-	t := p.lexer.str()
-	check(t)
-	return t.literal
-}
-
 func (p *Parser) expr() bool {
 	api := api_expr{}
-	if p.lexer.eof() {
+	t := p.lexer.next()
+
+	if t.typ == TK_EOF {
 		return false
 	}
-	p.packet_type()
-	p.match(':')
-	api.packet_type = p.literal()
-	p.name()
-	p.match(':')
-	api.name = p.literal()
-	p.payload()
-	p.match(':')
-	api.payload = p.literal()
-	p.desc()
-	p.match(':')
-	api.desc = p.literal()
+	if t.typ == TK_TYPE {
+		if p.lexer.next().typ == TK_COLON {
+			if t := p.lexer.next(); t.typ == TK_NUMBER {
+				api.packet_type = t.number
+			} else {
+				syntax_error()
+			}
+		}
+	}
+	if t := p.lexer.next(); t.typ == TK_NAME {
+		if p.lexer.next().typ == TK_COLON {
+			if t := p.lexer.next(); t.typ == TK_STRING {
+				api.name = t.literal
+			} else {
+				syntax_error()
+			}
+		}
+	}
+	if t := p.lexer.next(); t.typ == TK_PAYLOAD {
+		if p.lexer.next().typ == TK_COLON {
+			if t := p.lexer.next(); t.typ == TK_STRING {
+				api.payload = t.literal
+			} else {
+				syntax_error()
+			}
+		}
+	}
 
 	p.exprs = append(p.exprs, api)
 	return true
-}
-
-func check(t *token) {
-	if t == nil {
-		log.Fatal(SYNTAX_ERROR)
-	}
 }
 
 func main() {

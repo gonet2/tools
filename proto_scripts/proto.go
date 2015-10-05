@@ -24,6 +24,9 @@ var (
 		"integer": true,
 		"string":  true,
 		"bytes":   true,
+		"byte":    true,
+		"boolean": true,
+		"float":   true,
 	}
 )
 
