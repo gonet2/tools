@@ -2,7 +2,10 @@
 BEGIN {
 	## READERS
 	READERS["byte"]="ReadByte"
+	READERS["bytes"]="ReadBytes"
 	READERS["short"]="ReadInt16"
+	READERS["int8"]="ReadInt8"
+	READERS["uint8"]="ReadUnsignedInt8"
 	READERS["int16"]="ReadInt16"
 	READERS["uint16"]="ReadUnsignedInt16"
 	READERS["string"]="ReadUTFBytes"
@@ -20,7 +23,10 @@ BEGIN {
 	READERS["float64"]="ReadDouble"
 	## WRITERS
 	WRITERS["byte"]="WriteByte"
+	WRITERS["bytes"]="WriteBytes"
 	WRITERS["short"]="WriteInt16"
+	WRITERS["int8"]="WriteInt8"
+	WRITERS["uint8"]="WriteUnsignedInt8"
 	WRITERS["int16"]="WriteInt16"
 	WRITERS["uint16"]="WriteUnsignedInt16"
 	WRITERS["string"]="WriteUTF"
@@ -38,7 +44,10 @@ BEGIN {
 	WRITERS["float64"]="WriteDouble"
 	## 类型映射
 	TYPES["byte"]="byte"
+	TYPES["bytes"]="byte[]"
 	TYPES["short"]="Int16"
+	TYPES["int8"]="sbyte"
+	TYPES["uint8"]="byte"
 	TYPES["int16"]="Int16"
 	TYPES["uint16"]="UInt16"
 	TYPES["string"]="string"
