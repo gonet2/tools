@@ -22,14 +22,14 @@ var (
 )
 
 func init() {
-	logTemplate[FINEST] = "\033[0;34m%v [FINEST] %v %v %v %v %v \033[0m"
+	logTemplate[FINEST] = "\033[1;34m%v [FINEST] %v %v %v %v %v \033[0m"
 	logTemplate[FINE] = "\033[0;34m%v [FINE] %v %v %v %v %v \033[0m"
 	logTemplate[DEBUG] = "\033[1;32m%v [DEBUG] %v %v %v %v %v \033[0m"
 	logTemplate[TRACE] = "\033[0;37m%v [TRACE] %v %v %v %v %v \033[0m"
-	logTemplate[WARNING] = "\033[7;33m%v [WARNING] %v %v %v %v %v \033[0m"
+	logTemplate[WARNING] = "\033[0;33m%v [WARNING] %v %v %v %v %v \033[0m"
 	logTemplate[INFO] = "\033[0;32m%v [INFO] %v %v %v %v %v  \033[0m"
-	logTemplate[ERROR] = "\033[7;31m%v [ERROR] %v %v %v %v %v \033[0m"
-	logTemplate[CRITICAL] = "\033[0;31m%v [CRITICAL] %v %v %v %v %v \033[0m"
+	logTemplate[ERROR] = "\033[0;31m%v [ERROR] %v %v %v %v %v \033[0m"
+	logTemplate[CRITICAL] = "\033[7;31m%v [CRITICAL] %v %v %v %v %v \033[0m"
 }
 
 var (
