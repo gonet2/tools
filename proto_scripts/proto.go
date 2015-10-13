@@ -51,8 +51,13 @@ type token struct {
 	r       rune
 }
 
+func syntax_error(p *Parser) {
+	log.Fatal("syntax error @line:", p.lexer.lineno)
+}
+
 type Lexer struct {
 	reader *bytes.Buffer
+	lineno int
 }
 
 func (lex *Lexer) init(r io.Reader) {
@@ -65,6 +70,7 @@ func (lex *Lexer) init(r io.Reader) {
 	re := regexp.MustCompile("(?m:^#(.*)$)")
 	bts = re.ReplaceAllLiteral(bts, nil)
 	lex.reader = bytes.NewBuffer(bts)
+	lex.lineno = 1
 }
 
 func (lex *Lexer) next() (t *token) {
@@ -78,6 +84,9 @@ func (lex *Lexer) next() (t *token) {
 		if err == io.EOF {
 			return nil
 		} else if unicode.IsSpace(r) {
+			if r == '\n' {
+				lex.lineno++
+			}
 			continue
 		}
 		break
@@ -132,14 +141,15 @@ func (lex *Lexer) eof() bool {
 		if err == io.EOF {
 			return true
 		} else if unicode.IsSpace(r) {
+			if r == '\n' {
+				lex.lineno++
+			}
 			continue
 		} else {
 			lex.reader.UnreadRune()
 			return false
 		}
 	}
-
-	return true
 }
 
 //////////////////////////////////////////////////////////////
@@ -152,71 +162,52 @@ func (p *Parser) init(lex *Lexer) {
 	p.lexer = lex
 }
 
+func (p *Parser) match(typ int) *token {
+	t := p.lexer.next()
+	if t.typ != typ {
+		syntax_error(p)
+	}
+	return t
+}
+
 func (p *Parser) expr() bool {
 	if p.lexer.eof() {
 		return false
 	}
-
 	info := struct_info{}
-	if t := p.lexer.next(); t != nil {
-		if t.typ != SYMBOL {
-			syntax_error()
-		}
-		info.name = t.literal
-	}
 
-	if t := p.lexer.next(); t != nil {
-		if t.typ != STRUCT_BEGIN {
-			syntax_error()
-		}
-	}
-	t := p.fields(&info)
-	if t != nil {
-		if t.typ != STRUCT_END {
-			syntax_error()
-		}
-	}
+	t := p.match(SYMBOL)
+	info.name = t.literal
 
+	p.match(STRUCT_BEGIN)
+	p.fields(&info)
 	p.info = append(p.info, info)
 	return true
 }
 
-func (p *Parser) fields(info *struct_info) *token {
+func (p *Parser) fields(info *struct_info) {
 	for {
-		field := field_info{}
-		if t := p.lexer.next(); t != nil {
-			if t.typ != SYMBOL {
-				return t
-			}
-			field.name = t.literal
+		t := p.lexer.next()
+		if t.typ == STRUCT_END {
+			return
+		}
+		if t.typ != SYMBOL {
+			syntax_error(p)
 		}
 
-		if t := p.lexer.next(); t != nil {
-			if t.typ == ARRAY_TYPE {
-				field.array = true
-				if t := p.lexer.next(); t != nil {
-					if t.typ == SYMBOL {
-						field.typ = t.literal
-					}
-				}
-			} else if t.typ == DATA_TYPE || t.typ == SYMBOL {
-				field.typ = t.literal
-			} else {
-				syntax_error()
-			}
-
-			info.fields = append(info.fields, field)
+		field := field_info{name: t.literal}
+		t = p.lexer.next()
+		if t.typ == ARRAY_TYPE {
+			field.array = true
+			t = p.match(SYMBOL)
+			field.typ = t.literal
+		} else if t.typ == DATA_TYPE || t.typ == SYMBOL {
+			field.typ = t.literal
+		} else {
+			syntax_error(p)
 		}
-	}
-}
 
-func syntax_error() {
-	log.Fatal(SYNTAX_ERROR)
-}
-
-func check(t *token) {
-	if t == nil {
-		log.Fatal(SYNTAX_ERROR)
+		info.fields = append(info.fields, field)
 	}
 }
 

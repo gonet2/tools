@@ -186,7 +186,7 @@ func (p *Parser) init(lex *Lexer) {
 
 func (p *Parser) match(typ int) *token {
 	t := p.lexer.next()
-	if t == nil || t.typ != typ {
+	if t.typ != typ {
 		syntax_error(p)
 	}
 	return t
