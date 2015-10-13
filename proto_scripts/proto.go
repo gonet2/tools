@@ -16,6 +16,7 @@ const (
 	STRUCT_END
 	DATA_TYPE
 	ARRAY_TYPE
+	TK_EOF
 )
 
 var (
@@ -29,16 +30,21 @@ var (
 	}
 )
 
-type field_info struct {
-	name  string
-	typ   string
-	array bool
-}
+var (
+	TOKEN_EOF = &token{typ: TK_EOF}
+)
 
-type struct_info struct {
-	name   string
-	fields []field_info
-}
+type (
+	field_info struct {
+		name  string
+		typ   string
+		array bool
+	}
+	struct_info struct {
+		name   string
+		fields []field_info
+	}
+)
 
 type token struct {
 	typ     int
@@ -77,7 +83,7 @@ func (lex *Lexer) next() (t *token) {
 	for {
 		r, _, err = lex.reader.ReadRune()
 		if err == io.EOF {
-			return nil
+			return TOKEN_EOF
 		} else if unicode.IsSpace(r) {
 			if r == '\n' {
 				lex.lineno++
@@ -91,7 +97,7 @@ func (lex *Lexer) next() (t *token) {
 		for k := 0; k < 2; k++ { // check "==="
 			r, _, err = lex.reader.ReadRune()
 			if err == io.EOF {
-				return nil
+				return TOKEN_EOF
 			}
 			if r != '=' {
 				lex.reader.UnreadRune()
