@@ -30,10 +30,6 @@ var (
 	}
 )
 
-var (
-	SYNTAX_ERROR = errors.New("syntax error")
-)
-
 type field_info struct {
 	name  string
 	typ   string
