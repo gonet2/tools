@@ -20,6 +20,7 @@ const (
 	TK_STRING
 	TK_NUMBER
 	TK_EOF
+	TK_DESC
 )
 
 var (
@@ -27,6 +28,7 @@ var (
 		"packet_type": TK_TYPE,
 		"name":        TK_NAME,
 		"payload":     TK_PAYLOAD,
+		"desc":        TK_DESC,
 	}
 )
 
@@ -43,6 +45,7 @@ type api_expr struct {
 	packet_type int
 	name        string
 	payload     string
+	desc        string
 }
 
 type token struct {
@@ -68,10 +71,23 @@ func (lex *Lexer) init(r io.Reader) {
 	// 清除注释
 	re := regexp.MustCompile("(?m:^#(.*)$)")
 	bts = re.ReplaceAllLiteral(bts, nil)
-	// 清除desc
-	re = regexp.MustCompile("(?m:^desc:(.*)$)")
-	bts = re.ReplaceAllLiteral(bts, nil)
 	lex.reader = bytes.NewBuffer(bts)
+}
+
+func (lex *Lexer) read_desc() string {
+	var runes []rune
+	for {
+		r, _, err := lex.reader.ReadRune()
+		if err == io.EOF {
+			break
+		} else if r == '\r' || r == '\n' {
+			break
+		} else {
+			runes = append(runes, r)
+		}
+	}
+
+	return string(runes)
 }
 
 func (lex *Lexer) next() (t *token) {
@@ -180,6 +196,12 @@ func (p *Parser) expr() bool {
 			} else {
 				syntax_error()
 			}
+		}
+	}
+
+	if t := p.lexer.next(); t.typ == TK_DESC {
+		if p.lexer.next().typ == TK_COLON {
+			api.desc = p.lexer.read_desc()
 		}
 	}
 

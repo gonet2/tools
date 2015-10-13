@@ -5,12 +5,12 @@
 
 packet_type:0
 name:heart_beat_req
-payload:null
+payload:auto_id
 desc:心跳包..
 
 packet_type:1
 name:heart_beat_ack
-payload:null
+payload:auto_id
 desc:心跳包回复
 
 packet_type:10
@@ -33,32 +33,23 @@ name:client_error_ack
 payload:error_info
 desc:客户端错误
 
+packet_type:30
+name:get_seed_req
+payload:seed_info
+desc:socket通信加密使用
+
+packet_type:31
+name:get_seed_ack
+payload:seed_info
+desc:socket通信加密使用
+
+#1000以下为agent自己处理的协议， 1000以上会交给game service 处理,具体设置见agent 中的 MAX_PROTO_NUM 配置
 packet_type:1001
-name:start_game_req
-payload:null
-desc:玩家请求加入一局游戏
+name:proto_ping_req
+payload:auto_id
+desc: ping
 
 packet_type:1002
-name:start_game_succ_ack
-payload:vs_info
-desc:加入一局游戏成功
-
-packet_type:1003
-name:start_game_fail_ack
-payload:null
-desc:加入游戏失败
-
-packet_type:1004
-name:cmd_req
-payload:command
-desc: 指令
-
-packet_type:1005
-name:sync_notify
-payload:sync_info
-desc: 同步广播
-
-packet_type:1006
-name:serialize_req
-payload:serialize_data
-desc:客户端序列化请求
+name:proto_ping_ack
+payload:auto_id
+desc: ping回复

@@ -1,6 +1,6 @@
 # 该文件规定客户端和服务之间的通信结构体模式.注释必须独占一行!!!!!
 #
-# 基本类型 : integer float string boolean bytes
+# 基本类型 : integer float string boolean
 # 格式如下所示.若要定义数组，查找array看看已有定义你懂得.
 #
 # 每一个定义以'==='分割
@@ -22,40 +22,30 @@ code integer
 msg string
 ===
 
-#用户登陆发包
+#用户登陆发包 1代表使用uuid登陆 2代表使用客户端证书登陆
 user_login_info=
+login_way integer
+open_udid string
+client_certificate string
+client_version integer
+user_lang string
+app_id string
+os_version string
+device_name string
+device_id string
+device_id_type integer
 login_ip string
-udid string
+===
+
+#通信加密种子
+seed_info=
+client_send_seed integer
+client_receive_seed integer
 ===
 
 #用户信息包
 user_snapshot=
 uid integer
-name string
 ===
 
 
-#对阵信息
-#frame 开局多少帧
-vs_info=
-selfMatrixUid integer
-param bytes
-===
-
-#命令
-command=
-cmd bytes
-===
-
-
-#同步
-sync_info=
-frame integer
-cmds array command
-===
-
-#序列化
-serialize_data=
-frame integer
-data bytes
-===
