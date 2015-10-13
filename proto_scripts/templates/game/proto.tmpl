@@ -1,0 +1,45 @@
+package client_handler
+
+import "misc/packet"
+{{range .}}
+type S_{{.Name}} struct { {{range $f := .Fields}}{{with goType $f.Typ}}
+	F_{{$f.Name}} {{if $f.Array}}[]{{end}}{{.}}{{else}}
+	F_{{$f.Name}} {{if $f.Array}}[]{{end}}S_{{$f.Typ}}{{end}}{{end}}
+}
+
+func (p S_{{.Name}}) Pack(w *packet.Packet) { {{range $f := .Fields}}{{if $f.Array}}
+	w.{{goWrite "uint16"}}({{goType "uint16"}}(len(p.F_{{$f.Name}})))
+	for k := range p.F_{{$f.Name}} { {{end}}{{with goWrite $f.Typ}}
+	{{if $f.Array}}	{{end}}w.{{.}}(p.F_{{$f.Name}}{{if $f.Array}}[k]{{end}}){{else}}
+	{{if $f.Array}}	{{end}}p.F_{{$f.Name}}{{if $f.Array}}[k]{{end}}.Pack(w){{end}}{{if $f.Array}}
+	}{{end}}{{end}}
+}
+
+func PKT_{{.Name}}(reader *packet.Packet) (tbl S_{{.Name}}, err error) { {{range $f := .Fields}}{{if $f.Array}}
+	{
+		narr, err := reader.{{goRead "uint16"}}()
+		checkErr(err)
+{{with goRead $f.Typ}}
+		for i := 0; i < int(narr); i++ {
+			v, err := reader.{{.}}()
+			tbl.F_{{$f.Name}} = append(tbl.F_{{$f.Name}}, v)
+			checkErr(err)
+		}{{else}}
+		tbl.F_{{$f.Name}} = make([]S_{{$f.Typ}}, narr)
+		for i := 0; i < int(narr); i++ {
+			tbl.F_{{$f.Name}}[i], err = PKT_{{$f.Typ}}(reader)
+			checkErr(err)
+		}{{end}}
+	}{{else}}{{with goRead $f.Typ}}
+	tbl.F_{{$f.Name}}, err = reader.{{.}}(){{else}}
+	tbl.F_{{$f.Name}}, err = PKT_{{$f.Typ}}(reader){{end}}
+	checkErr(err){{end}}
+{{end}}
+	return
+}
+{{end}}
+func checkErr(err error) {
+	if err != nil {
+		panic("error occured in protocol module")
+	}
+}
