@@ -171,7 +171,7 @@ func (lex *Lexer) next() (t *token) {
 	} else {
 		log.Fatal("lex error @line:", lex.lineno)
 	}
-	return TOKEN_EOF
+	return nil
 }
 
 //////////////////////////////////////////////////////////////

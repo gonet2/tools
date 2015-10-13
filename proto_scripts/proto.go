@@ -130,8 +130,9 @@ func (lex *Lexer) next() (t *token) {
 		}
 
 		return t
+	} else {
+		log.Fatal("lex error @line:", lex.lineno)
 	}
-
 	return nil
 }
 
