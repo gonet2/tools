@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"io/ioutil"
 	"log"
@@ -33,10 +32,6 @@ var (
 )
 
 var (
-	SYNTAX_ERROR = errors.New("syntax error")
-)
-
-var (
 	TOKEN_EOF   = &token{typ: TK_EOF}
 	TOKEN_COLON = &token{typ: TK_COLON}
 )
@@ -54,12 +49,13 @@ type token struct {
 	number  int
 }
 
-func syntax_error() {
-	log.Fatal(SYNTAX_ERROR)
+func syntax_error(p *Parser) {
+	log.Fatal("syntax error @line:", p.lexer.lineno)
 }
 
 type Lexer struct {
 	reader *bytes.Buffer
+	lineno int
 }
 
 func (lex *Lexer) init(r io.Reader) {
@@ -72,6 +68,7 @@ func (lex *Lexer) init(r io.Reader) {
 	re := regexp.MustCompile("(?m:^#(.*)$)")
 	bts = re.ReplaceAllLiteral(bts, nil)
 	lex.reader = bytes.NewBuffer(bts)
+	lex.lineno = 1
 }
 
 func (lex *Lexer) read_desc() string {
@@ -80,7 +77,10 @@ func (lex *Lexer) read_desc() string {
 		r, _, err := lex.reader.ReadRune()
 		if err == io.EOF {
 			break
-		} else if r == '\r' || r == '\n' {
+		} else if r == '\r' {
+			break
+		} else if r == '\n' {
+			lex.lineno++
 			break
 		} else {
 			runes = append(runes, r)
@@ -88,6 +88,23 @@ func (lex *Lexer) read_desc() string {
 	}
 
 	return string(runes)
+}
+
+func (lex *Lexer) eof() bool {
+	for {
+		r, _, err := lex.reader.ReadRune()
+		if err == io.EOF {
+			return true
+		} else if unicode.IsSpace(r) {
+			if r == '\n' {
+				lex.lineno++
+			}
+			continue
+		} else {
+			lex.reader.UnreadRune()
+			return false
+		}
+	}
 }
 
 func (lex *Lexer) next() (t *token) {
@@ -101,6 +118,9 @@ func (lex *Lexer) next() (t *token) {
 		if err == io.EOF {
 			return TOKEN_EOF
 		} else if unicode.IsSpace(r) {
+			if r == '\n' {
+				lex.lineno++
+			}
 			continue
 		}
 		break
@@ -149,7 +169,7 @@ func (lex *Lexer) next() (t *token) {
 	} else if r == ':' {
 		return TOKEN_COLON
 	} else {
-		syntax_error()
+		log.Fatal("lex error @line:", lex.lineno)
 	}
 	return TOKEN_EOF
 }
@@ -164,46 +184,38 @@ func (p *Parser) init(lex *Lexer) {
 	p.lexer = lex
 }
 
-func (p *Parser) expr() bool {
-	api := api_expr{}
+func (p *Parser) match(typ int) *token {
 	t := p.lexer.next()
+	if t == nil || t.typ != typ {
+		syntax_error(p)
+	}
+	return t
+}
 
-	if t.typ == TK_EOF {
+func (p *Parser) expr() bool {
+	if p.lexer.eof() {
 		return false
 	}
-	if t.typ == TK_TYPE {
-		if p.lexer.next().typ == TK_COLON {
-			if t := p.lexer.next(); t.typ == TK_NUMBER {
-				api.packet_type = t.number
-			} else {
-				syntax_error()
-			}
-		}
-	}
-	if t := p.lexer.next(); t.typ == TK_NAME {
-		if p.lexer.next().typ == TK_COLON {
-			if t := p.lexer.next(); t.typ == TK_STRING {
-				api.name = t.literal
-			} else {
-				syntax_error()
-			}
-		}
-	}
-	if t := p.lexer.next(); t.typ == TK_PAYLOAD {
-		if p.lexer.next().typ == TK_COLON {
-			if t := p.lexer.next(); t.typ == TK_STRING {
-				api.payload = t.literal
-			} else {
-				syntax_error()
-			}
-		}
-	}
+	api := api_expr{}
 
-	if t := p.lexer.next(); t.typ == TK_DESC {
-		if p.lexer.next().typ == TK_COLON {
-			api.desc = p.lexer.read_desc()
-		}
-	}
+	p.match(TK_TYPE)
+	p.match(TK_COLON)
+	t := p.match(TK_NUMBER)
+	api.packet_type = t.number
+
+	p.match(TK_NAME)
+	p.match(TK_COLON)
+	t = p.match(TK_STRING)
+	api.name = t.literal
+
+	p.match(TK_PAYLOAD)
+	p.match(TK_COLON)
+	t = p.match(TK_STRING)
+	api.payload = t.literal
+
+	p.match(TK_DESC)
+	p.match(TK_COLON)
+	api.desc = p.lexer.read_desc()
 
 	p.exprs = append(p.exprs, api)
 	return true
