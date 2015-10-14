@@ -18,7 +18,8 @@ namespace NetProto.Proto
         public override void Pack(ByteArray w)
         { {{range $f := .Fields}}{{if $f.Array}}
             w.{{csWrite "uint16"}}(({{csType "uint16"}})this.{{$f.Name}}.Length);
-            for (int k = 0; k < this.{{$f.Name}}.Length; k++) { {{end}}{{with csWrite $f.Typ}}
+            for (int k = 0; k < this.{{$f.Name}}.Length; k++)
+            { {{end}}{{with csWrite $f.Typ}}
             {{if $f.Array}}    {{end}}w.{{.}}(this.{{$f.Name}}{{if $f.Array}}[k]{{end}});{{else}}
             {{if $f.Array}}    {{end}}this.{{$f.Name}}{{if $f.Array}}[k]{{end}}.Pack(w);{{end}}{{if $f.Array}}
             }{{end}}{{end}}
@@ -30,11 +31,13 @@ namespace NetProto.Proto
             {
                 {{csType "uint16"}} narr = reader.{{csRead "uint16"}}();{{with csRead $f.Typ}}
                 tbl.{{$f.Name}} = new {{csType $f.Typ}}[narr];
-                for (int i = 0; i < narr; i++) {
+                for (int i = 0; i < narr; i++)
+                {
                     tbl.{{$f.Name}}[i] = reader.{{.}}();
                 }{{else}}
                 tbl.{{$f.Name}} = new {{$f.Typ}}[narr];
-                for (int i = 0; i < narr; i++) {
+                for (int i = 0; i < narr; i++)
+                {
                     tbl.{{$f.Name}}[i] = {{$f.Typ}}.UnPack(reader);
                 }{{end}}
             }{{else}}{{with csRead $f.Typ}}
