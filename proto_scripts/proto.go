@@ -24,27 +24,7 @@ const (
 )
 
 var (
-	datatypes = map[string]bool{
-		"integer": true,
-		"string":  true,
-		"bytes":   true,
-		"byte":    true,
-		"boolean": true,
-		"bool":    true,
-		"float":   true,
-		"float32": true,
-		"float64": true,
-		"uint8":   true,
-		"int8":    true,
-		"uint16":  true,
-		"int16":   true,
-		"uint32":  true,
-		"int32":   true,
-		"uint64":  true,
-		"int64":   true,
-		"long":    true,
-		"short":   true,
-	}
+	datatypes map[string]lang_type
 )
 
 var (
@@ -160,7 +140,7 @@ func (lex *Lexer) next() (t *token) {
 
 		t := &token{}
 		t.literal = string(runes)
-		if datatypes[t.literal] {
+		if _, ok := datatypes[t.literal]; ok {
 			t.typ = TK_DATA_TYPE
 		} else if t.literal == "array" {
 			t.typ = TK_ARRAY
@@ -263,6 +243,15 @@ func main() {
 		cli.StringFlag{Name: "template,t", Value: "./templates/server/proto.tmpl", Usage: "template file"},
 	}
 	app.Action = func(c *cli.Context) {
+		// load function mapping
+		f, err := os.Open("func_map.json")
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := json.NewDecoder(f).Decode(&datatypes); err != nil {
+			log.Fatal(err)
+		}
+
 		// parse
 		file, err := os.Open(c.String("file"))
 		if err != nil {
@@ -275,55 +264,45 @@ func main() {
 		for p.expr() {
 		}
 
-		// load function mapping
-		var funcs map[string]lang_type
-		f, err := os.Open("func_map.json")
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := json.NewDecoder(f).Decode(&funcs); err != nil {
-			log.Fatal(err)
-		}
-
 		// use template to generate final output
 		funcMap := template.FuncMap{
 			"goType": func(t string) string {
-				if v, ok := funcs[t]; ok {
+				if v, ok := datatypes[t]; ok {
 					return v.Go.T
 				} else {
 					return ""
 				}
 			},
 			"goRead": func(t string) string {
-				if v, ok := funcs[t]; ok {
+				if v, ok := datatypes[t]; ok {
 					return v.Go.R
 				} else {
 					return ""
 				}
 			},
 			"goWrite": func(t string) string {
-				if v, ok := funcs[t]; ok {
+				if v, ok := datatypes[t]; ok {
 					return v.Go.W
 				} else {
 					return ""
 				}
 			},
 			"csType": func(t string) string {
-				if v, ok := funcs[t]; ok {
+				if v, ok := datatypes[t]; ok {
 					return v.Cs.T
 				} else {
 					return ""
 				}
 			},
 			"csRead": func(t string) string {
-				if v, ok := funcs[t]; ok {
+				if v, ok := datatypes[t]; ok {
 					return v.Cs.R
 				} else {
 					return ""
 				}
 			},
 			"csWrite": func(t string) string {
-				if v, ok := funcs[t]; ok {
+				if v, ok := datatypes[t]; ok {
 					return v.Cs.W
 				} else {
 					return ""
