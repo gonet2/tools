@@ -175,7 +175,7 @@ func (lex *Lexer) eof() bool {
 //////////////////////////////////////////////////////////////
 type Parser struct {
 	lexer *Lexer
-	info  []struct_info
+	infos []struct_info
 }
 
 func (p *Parser) init(lex *Lexer) {
@@ -201,7 +201,7 @@ func (p *Parser) expr() bool {
 
 	p.match(TK_STRUCT_BEGIN)
 	p.fields(&info)
-	p.info = append(p.info, info)
+	p.infos = append(p.infos, info)
 	return true
 }
 
@@ -229,6 +229,22 @@ func (p *Parser) fields(info *struct_info) {
 		}
 
 		info.Fields = append(info.Fields, field)
+	}
+}
+
+func semantic_check(infos []struct_info) {
+	for _, info := range infos {
+		for _, field := range info.Fields {
+			if _, ok := datatypes[field.Typ]; !ok {
+				for _, info := range infos {
+					if info.Name == field.Typ {
+						goto NEXT
+					}
+				}
+				log.Fatal("symbol not defined:", field.Typ)
+			}
+		NEXT:
+		}
 	}
 }
 
@@ -263,6 +279,9 @@ func main() {
 		p.init(&lexer)
 		for p.expr() {
 		}
+
+		// semantic
+		semantic_check(p.infos)
 
 		// use template to generate final output
 		funcMap := template.FuncMap{
@@ -313,7 +332,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = tmpl.Execute(os.Stdout, p.info)
+		err = tmpl.Execute(os.Stdout, p.infos)
 		if err != nil {
 			log.Fatal(err)
 		}
