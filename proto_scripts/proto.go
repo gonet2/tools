@@ -96,7 +96,7 @@ type Lexer struct {
 func (lex *Lexer) init(r io.Reader) {
 	bts, err := ioutil.ReadAll(r)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 
 	// 按行读入源码
@@ -275,34 +275,21 @@ func main() {
 		for p.expr() {
 		}
 
-		// function mapping
+		// load function mapping
 		f, err := os.Open("func_map.json")
 		if err != nil {
 			log.Fatal(err)
 		}
-		dec := json.NewDecoder(f)
-
-		// read open bracket
-		_, err = dec.Token()
+		bts, err := ioutil.ReadAll(f)
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		var funcs map[string]lang_type
-		for dec.More() {
-			// decode an array value (Message)
-			err := dec.Decode(&funcs)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		// read closing bracket
-		_, err = dec.Token()
-		if err != nil {
+		if err := json.Unmarshal(bts, &funcs); err != nil {
 			log.Fatal(err)
 		}
 
+		// use template to generate final output
 		funcMap := template.FuncMap{
 			"goType": func(t string) string {
 				if v, ok := funcs[t]; ok {
