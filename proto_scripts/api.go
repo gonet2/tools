@@ -8,6 +8,8 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
+	"text/template"
 	"unicode"
 )
 
@@ -20,6 +22,10 @@ const (
 	TK_NUMBER
 	TK_EOF
 	TK_DESC
+)
+
+const (
+	MAX_PROTO_NUM = 1000 // agent能处理的最大协议号
 )
 
 var (
@@ -37,10 +43,10 @@ var (
 )
 
 type api_expr struct {
-	packet_type int
-	name        string
-	payload     string
-	desc        string
+	PacketType int
+	Name       string
+	Payload    string
+	Desc       string
 }
 
 type token struct {
@@ -201,27 +207,32 @@ func (p *Parser) expr() bool {
 	p.match(TK_TYPE)
 	p.match(TK_COLON)
 	t := p.match(TK_NUMBER)
-	api.packet_type = t.number
+	api.PacketType = t.number
 
 	p.match(TK_NAME)
 	p.match(TK_COLON)
 	t = p.match(TK_STRING)
-	api.name = t.literal
+	api.Name = t.literal
 
 	p.match(TK_PAYLOAD)
 	p.match(TK_COLON)
 	t = p.match(TK_STRING)
-	api.payload = t.literal
+	api.Payload = t.literal
 
 	p.match(TK_DESC)
 	p.match(TK_COLON)
-	api.desc = p.lexer.read_desc()
+	api.Desc = p.lexer.read_desc()
 
 	p.exprs = append(p.exprs, api)
 	return true
 }
 
 func main() {
+
+	if len(os.Args) != 2 {
+		return
+	}
+
 	lexer := Lexer{}
 	lexer.init(os.Stdin)
 	p := Parser{}
@@ -229,4 +240,33 @@ func main() {
 	for p.expr() {
 	}
 	log.Println(p.exprs)
+
+	funcMap := template.FuncMap{
+		"isAgentHandler": func(api api_expr) bool {
+			if !strings.HasSuffix(api.Name, "_req") {
+				return false
+			}
+			if api.PacketType <= MAX_PROTO_NUM {
+				return true
+			}
+			return false
+		},
+		"isGameHandler": func(api api_expr) bool {
+			if !strings.HasSuffix(api.Name, "_req") {
+				return false
+			}
+			if api.PacketType > MAX_PROTO_NUM {
+				return true
+			}
+			return false
+		},
+	}
+	tmpl, err := template.New("api.tmpl").Funcs(funcMap).ParseFiles(os.Args[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = tmpl.Execute(os.Stdout, p.exprs)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

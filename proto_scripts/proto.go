@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"regexp"
+	"text/template"
 	"unicode"
 )
 
@@ -28,21 +30,33 @@ var (
 		"boolean": true,
 		"float":   true,
 	}
+
+	funcs map[string]lang_type
 )
 
 var (
 	TOKEN_EOF = &token{typ: TK_EOF}
 )
 
+type func_info struct {
+	T string `json:"t"` // type
+	R string `json:"r"` // read
+	W string `json:"w"` // write
+}
+
+type lang_type struct {
+	Go func_info `json:"go"` // golang
+	Cs func_info `json:"cs"` // c#
+}
 type (
 	field_info struct {
-		name  string
-		typ   string
-		array bool
+		Name  string
+		Typ   string
+		Array bool
 	}
 	struct_info struct {
-		name   string
-		fields []field_info
+		Name   string
+		Fields []field_info
 	}
 )
 
@@ -179,7 +193,7 @@ func (p *Parser) expr() bool {
 	info := struct_info{}
 
 	t := p.match(SYMBOL)
-	info.name = t.literal
+	info.Name = t.literal
 
 	p.match(STRUCT_BEGIN)
 	p.fields(&info)
@@ -197,23 +211,54 @@ func (p *Parser) fields(info *struct_info) {
 			syntax_error(p)
 		}
 
-		field := field_info{name: t.literal}
+		field := field_info{Name: t.literal}
 		t = p.lexer.next()
 		if t.typ == ARRAY_TYPE {
-			field.array = true
+			field.Array = true
 			t = p.match(SYMBOL)
-			field.typ = t.literal
+			field.Typ = t.literal
 		} else if t.typ == DATA_TYPE || t.typ == SYMBOL {
-			field.typ = t.literal
+			field.Typ = t.literal
 		} else {
 			syntax_error(p)
 		}
 
-		info.fields = append(info.fields, field)
+		info.Fields = append(info.Fields, field)
 	}
 }
 
 func main() {
+
+	if len(os.Args) != 2 {
+		return
+	}
+
+	f, err := os.Open("func_map.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	dec := json.NewDecoder(f)
+
+	// read open bracket
+	_, err = dec.Token()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for dec.More() {
+		// decode an array value (Message)
+		err := dec.Decode(&funcs)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// read closing bracket
+	_, err = dec.Token()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	lexer := Lexer{}
 	lexer.init(os.Stdin)
 	p := Parser{}
@@ -222,4 +267,57 @@ func main() {
 	}
 
 	log.Println(p.info)
+
+	funcMap := template.FuncMap{
+		"goType": func(t string) string {
+			if v, ok := funcs[t]; ok {
+				return v.Go.T
+			} else {
+				return ""
+			}
+		},
+		"goRead": func(t string) string {
+			if v, ok := funcs[t]; ok {
+				return v.Go.R
+			} else {
+				return ""
+			}
+		},
+		"goWrite": func(t string) string {
+			if v, ok := funcs[t]; ok {
+				return v.Go.W
+			} else {
+				return ""
+			}
+		},
+		"csType": func(t string) string {
+			if v, ok := funcs[t]; ok {
+				return v.Cs.T
+			} else {
+				return ""
+			}
+		},
+		"csRead": func(t string) string {
+			if v, ok := funcs[t]; ok {
+				return v.Cs.R
+			} else {
+				return ""
+			}
+		},
+		"csWrite": func(t string) string {
+			if v, ok := funcs[t]; ok {
+				return v.Cs.W
+			} else {
+				return ""
+			}
+		},
+	}
+	tmpl, err := template.New("proto.tmpl").Funcs(funcMap).ParseFiles(os.Args[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = tmpl.Execute(os.Stdout, p.info)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
