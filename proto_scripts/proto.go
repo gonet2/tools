@@ -45,24 +45,24 @@ var (
 		"long":    true,
 		"short":   true,
 	}
-
-	funcs map[string]lang_type
 )
 
 var (
 	TOKEN_EOF = &token{typ: TK_EOF}
 )
 
-type func_info struct {
-	T string `json:"t"` // type
-	R string `json:"r"` // read
-	W string `json:"w"` // write
-}
+type (
+	func_info struct {
+		T string `json:"t"` // type
+		R string `json:"r"` // read
+		W string `json:"w"` // write
+	}
+	lang_type struct {
+		Go func_info `json:"go"` // golang
+		Cs func_info `json:"cs"` // c#
+	}
+)
 
-type lang_type struct {
-	Go func_info `json:"go"` // golang
-	Cs func_info `json:"cs"` // c#
-}
 type (
 	field_info struct {
 		Name  string
@@ -288,6 +288,7 @@ func main() {
 			log.Fatal(err)
 		}
 
+		var funcs map[string]lang_type
 		for dec.More() {
 			// decode an array value (Message)
 			err := dec.Decode(&funcs)
