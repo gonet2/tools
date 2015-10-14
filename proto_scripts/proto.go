@@ -276,16 +276,12 @@ func main() {
 		}
 
 		// load function mapping
+		var funcs map[string]lang_type
 		f, err := os.Open("func_map.json")
 		if err != nil {
 			log.Fatal(err)
 		}
-		bts, err := ioutil.ReadAll(f)
-		if err != nil {
-			log.Fatal(err)
-		}
-		var funcs map[string]lang_type
-		if err := json.Unmarshal(bts, &funcs); err != nil {
+		if err := json.NewDecoder(f).Decode(&funcs); err != nil {
 			log.Fatal(err)
 		}
 
