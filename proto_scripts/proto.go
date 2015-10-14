@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/codegangsta/cli"
 	"io"
 	"io/ioutil"
 	"log"
@@ -228,96 +229,107 @@ func (p *Parser) fields(info *struct_info) {
 }
 
 func main() {
-
-	if len(os.Args) != 2 {
-		return
+	app := cli.NewApp()
+	app.Name = "Protocol Data Structure Generator"
+	app.Usage = "See go run proto.go -h"
+	app.Authors = []cli.Author{{Name: "xtaci"}, {Name: "ycs"}}
+	app.Version = "1.0"
+	app.Flags = []cli.Flag{
+		cli.StringFlag{Name: "file,f", Value: "./proto.txt", Usage: "input proto.txt file"},
+		cli.StringFlag{Name: "template,t", Value: "./templates/server/proto.tmpl", Usage: "template file"},
 	}
+	app.Action = func(c *cli.Context) {
+		// parse
+		file, err := os.Open(c.String("file"))
+		if err != nil {
+			log.Fatal(err)
+		}
+		lexer := Lexer{}
+		lexer.init(file)
+		p := Parser{}
+		p.init(&lexer)
+		for p.expr() {
+		}
 
-	f, err := os.Open("func_map.json")
-	if err != nil {
-		log.Fatal(err)
-	}
-	dec := json.NewDecoder(f)
+		// function mapping
+		f, err := os.Open("func_map.json")
+		if err != nil {
+			log.Fatal(err)
+		}
+		dec := json.NewDecoder(f)
 
-	// read open bracket
-	_, err = dec.Token()
-	if err != nil {
-		log.Fatal(err)
-	}
+		// read open bracket
+		_, err = dec.Token()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	for dec.More() {
-		// decode an array value (Message)
-		err := dec.Decode(&funcs)
+		for dec.More() {
+			// decode an array value (Message)
+			err := dec.Decode(&funcs)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		// read closing bracket
+		_, err = dec.Token()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		funcMap := template.FuncMap{
+			"goType": func(t string) string {
+				if v, ok := funcs[t]; ok {
+					return v.Go.T
+				} else {
+					return ""
+				}
+			},
+			"goRead": func(t string) string {
+				if v, ok := funcs[t]; ok {
+					return v.Go.R
+				} else {
+					return ""
+				}
+			},
+			"goWrite": func(t string) string {
+				if v, ok := funcs[t]; ok {
+					return v.Go.W
+				} else {
+					return ""
+				}
+			},
+			"csType": func(t string) string {
+				if v, ok := funcs[t]; ok {
+					return v.Cs.T
+				} else {
+					return ""
+				}
+			},
+			"csRead": func(t string) string {
+				if v, ok := funcs[t]; ok {
+					return v.Cs.R
+				} else {
+					return ""
+				}
+			},
+			"csWrite": func(t string) string {
+				if v, ok := funcs[t]; ok {
+					return v.Cs.W
+				} else {
+					return ""
+				}
+			},
+		}
+		tmpl, err := template.New("proto.tmpl").Funcs(funcMap).ParseFiles(c.String("template"))
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = tmpl.Execute(os.Stdout, p.info)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-
-	// read closing bracket
-	_, err = dec.Token()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	lexer := Lexer{}
-	lexer.init(os.Stdin)
-	p := Parser{}
-	p.init(&lexer)
-	for p.expr() {
-	}
-
-	log.Println(p.info)
-
-	funcMap := template.FuncMap{
-		"goType": func(t string) string {
-			if v, ok := funcs[t]; ok {
-				return v.Go.T
-			} else {
-				return ""
-			}
-		},
-		"goRead": func(t string) string {
-			if v, ok := funcs[t]; ok {
-				return v.Go.R
-			} else {
-				return ""
-			}
-		},
-		"goWrite": func(t string) string {
-			if v, ok := funcs[t]; ok {
-				return v.Go.W
-			} else {
-				return ""
-			}
-		},
-		"csType": func(t string) string {
-			if v, ok := funcs[t]; ok {
-				return v.Cs.T
-			} else {
-				return ""
-			}
-		},
-		"csRead": func(t string) string {
-			if v, ok := funcs[t]; ok {
-				return v.Cs.R
-			} else {
-				return ""
-			}
-		},
-		"csWrite": func(t string) string {
-			if v, ok := funcs[t]; ok {
-				return v.Cs.W
-			} else {
-				return ""
-			}
-		},
-	}
-	tmpl, err := template.New("proto.tmpl").Funcs(funcMap).ParseFiles(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = tmpl.Execute(os.Stdout, p.info)
-	if err != nil {
-		log.Fatal(err)
-	}
+	app.Run(os.Args)
 }

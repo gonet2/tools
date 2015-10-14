@@ -226,7 +226,7 @@ func (p *Parser) expr() bool {
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "API Protocol Generator"
+	app.Name = "Protocol Handler Generator"
 	app.Usage = "See go run api.go -h"
 	app.Authors = []cli.Author{{Name: "xtaci"}, {Name: "ycs"}}
 	app.Version = "1.0"
@@ -234,7 +234,7 @@ func main() {
 		cli.StringFlag{Name: "file,f", Value: "./api.txt", Usage: "input api.txt file"},
 		cli.IntFlag{Name: "min_proto,min", Value: 0, Usage: "minimum proto number"},
 		cli.IntFlag{Name: "max_proto,max", Value: 1000, Usage: "maximum proto number"},
-		cli.StringFlag{Name: "template,t", Value: "./templates/game/api.tmpl", Usage: "template file"},
+		cli.StringFlag{Name: "template,t", Value: "./templates/server/api.tmpl", Usage: "template file"},
 	}
 	app.Action = func(c *cli.Context) {
 		// parse
