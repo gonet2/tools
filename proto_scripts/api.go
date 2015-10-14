@@ -249,17 +249,12 @@ func main() {
 		for p.expr() {
 		}
 
-		// exclude protos outside of [min_proto, max_proto]
-		var exprs []api_expr
-		for k := range p.exprs {
-			if p.exprs[k].PacketType >= c.Int("min_proto") && p.exprs[k].PacketType <= c.Int("max_proto") {
-				exprs = append(exprs, p.exprs[k])
-			}
-		}
-
 		// use template to generate final output
 		funcMap := template.FuncMap{
 			"isReq": func(api api_expr) bool {
+				if api.PacketType < c.Int("min_proto") || api.PacketType > c.Int("max_proto") {
+					return false
+				}
 				if strings.HasSuffix(api.Name, "_req") {
 					return true
 				}
@@ -270,7 +265,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = tmpl.Execute(os.Stdout, exprs)
+		err = tmpl.Execute(os.Stdout, p.exprs)
 		if err != nil {
 			log.Fatal(err)
 		}
