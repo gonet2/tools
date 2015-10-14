@@ -216,9 +216,10 @@ func (p *Parser) fields(info *struct_info) {
 		t = p.lexer.next()
 		if t.typ == TK_ARRAY {
 			field.Array = true
-			t = p.match(TK_SYMBOL)
-			field.Typ = t.literal
-		} else if t.typ == TK_DATA_TYPE || t.typ == TK_SYMBOL {
+			t = p.lexer.next()
+		}
+
+		if t.typ == TK_DATA_TYPE || t.typ == TK_SYMBOL {
 			field.Typ = t.literal
 		} else {
 			syntax_error(p)

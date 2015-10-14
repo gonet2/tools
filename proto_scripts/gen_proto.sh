@@ -9,7 +9,7 @@
 export PATH_AGENT=./proto_code/agent/
 export PATH_GAME=./proto_code/game/
 export PATH_CLIENT=./proto_code/client/
-go get -u github.com/codegangsta/cli
+go get github.com/codegangsta/cli
 
 ## api.txt
 go run api.go --min 0 --max 1000 > $PATH_AGENT/api.go; go fmt $PATH_AGENT/api.go
