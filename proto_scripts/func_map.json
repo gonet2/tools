@@ -55,8 +55,8 @@
         "uint8": {
             "go": {
                 "t": "uint8",
-                "r": "ReadU8",
-                "w": "WriteU8"
+                "r": "ReadByte",
+                "w": "WriteByte"
             },
             "cs": {
                 "t": "byte",
