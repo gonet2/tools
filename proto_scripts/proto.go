@@ -231,7 +231,7 @@ func (p *Parser) fields(info *struct_info) {
 func main() {
 	app := cli.NewApp()
 	app.Name = "Protocol Data Structure Generator"
-	app.Usage = "See go run proto.go -h"
+	app.Usage = "handle proto.txt"
 	app.Authors = []cli.Author{{Name: "xtaci"}, {Name: "ycs"}}
 	app.Version = "1.0"
 	app.Flags = []cli.Flag{

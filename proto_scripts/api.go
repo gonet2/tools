@@ -227,7 +227,7 @@ func (p *Parser) expr() bool {
 func main() {
 	app := cli.NewApp()
 	app.Name = "Protocol Handler Generator"
-	app.Usage = "See go run api.go -h"
+	app.Usage = "handle api.txt"
 	app.Authors = []cli.Author{{Name: "xtaci"}, {Name: "ycs"}}
 	app.Version = "1.0"
 	app.Flags = []cli.Flag{
