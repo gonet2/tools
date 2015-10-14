@@ -29,7 +29,19 @@ var (
 		"bytes":   true,
 		"byte":    true,
 		"boolean": true,
+		"bool":    true,
 		"float":   true,
+		"float32": true,
+		"float64": true,
+		"uint8":   true,
+		"int8":    true,
+		"uint16":  true,
+		"int16":   true,
+		"uint32":  true,
+		"int32":   true,
+		"uint64":  true,
+		"int64":   true,
+		"long":    true,
 	}
 
 	funcs map[string]lang_type
