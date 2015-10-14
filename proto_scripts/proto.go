@@ -174,12 +174,14 @@ func (lex *Lexer) eof() bool {
 
 //////////////////////////////////////////////////////////////
 type Parser struct {
-	lexer *Lexer
-	infos []struct_info
+	lexer   *Lexer
+	infos   []struct_info
+	symbols map[string]bool
 }
 
 func (p *Parser) init(lex *Lexer) {
 	p.lexer = lex
+	p.symbols = make(map[string]bool)
 }
 
 func (p *Parser) match(typ int) *token {
@@ -215,6 +217,7 @@ func (p *Parser) fields(info *struct_info) {
 			syntax_error(p)
 		}
 
+		p.symbols[t.literal] = true
 		field := field_info{Name: t.literal}
 		t = p.lexer.next()
 		if t.typ == TK_ARRAY {
@@ -232,18 +235,16 @@ func (p *Parser) fields(info *struct_info) {
 	}
 }
 
-func semantic_check(infos []struct_info) {
-	for _, info := range infos {
+func (p *Parser) semantic_check() {
+	for _, info := range p.infos {
+	FIELDLOOP:
 		for _, field := range info.Fields {
 			if _, ok := datatypes[field.Typ]; !ok {
-				for _, info := range infos {
-					if info.Name == field.Typ {
-						goto NEXT
-					}
+				if p.symbols[field.Typ] {
+					continue FIELDLOOP
 				}
-				log.Fatal("symbol not defined:", field.Typ)
+				log.Fatal("symbol not found:", field)
 			}
-		NEXT:
 		}
 	}
 }
@@ -281,7 +282,7 @@ func main() {
 		}
 
 		// semantic
-		semantic_check(p.infos)
+		p.semantic_check()
 
 		// use template to generate final output
 		funcMap := template.FuncMap{
