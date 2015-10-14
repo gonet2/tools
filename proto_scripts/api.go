@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"github.com/codegangsta/cli"
 	"io"
 	"io/ioutil"
 	"log"
@@ -228,45 +229,55 @@ func (p *Parser) expr() bool {
 }
 
 func main() {
-
-	if len(os.Args) != 2 {
-		return
+	app := cli.NewApp()
+	app.Name = "API Protocol Generator"
+	app.Usage = "See go run api.go -h"
+	app.Authors = []cli.Author{{Name: "xtaci"}, {Name: "ycs"}}
+	app.Version = "1.0"
+	app.Flags = []cli.Flag{
+		cli.StringFlag{Name: "file,f", Value: "./api.txt", Usage: "input api.txt file"},
+		cli.IntFlag{Name: "min_proto,min", Value: 0, Usage: "minimum proto number"},
+		cli.IntFlag{Name: "max_proto,max", Value: 1000, Usage: "maximum proto number"},
+		cli.StringFlag{Name: "template,t", Value: "./templates/game/api.tmpl", Usage: "template file"},
 	}
+	app.Action = func(c *cli.Context) {
+		// parse
+		file, err := os.Open(c.String("file"))
+		if err != nil {
+			log.Fatal(err)
+		}
+		lexer := Lexer{}
+		lexer.init(file)
+		p := Parser{}
+		p.init(&lexer)
+		for p.expr() {
+		}
 
-	lexer := Lexer{}
-	lexer.init(os.Stdin)
-	p := Parser{}
-	p.init(&lexer)
-	for p.expr() {
-	}
-	log.Println(p.exprs)
+		// exclude protos outside of [min_proto, max_proto]
+		var exprs []api_expr
+		for k := range p.exprs {
+			if p.exprs[k].PacketType >= c.Int("min_proto") && p.exprs[k].PacketType <= c.Int("max_proto") {
+				exprs = append(exprs, p.exprs[k])
+			}
+		}
 
-	funcMap := template.FuncMap{
-		"isAgentHandler": func(api api_expr) bool {
-			if !strings.HasSuffix(api.Name, "_req") {
+		// use template to generate final output
+		funcMap := template.FuncMap{
+			"isReq": func(api api_expr) bool {
+				if strings.HasSuffix(api.Name, "_req") {
+					return true
+				}
 				return false
-			}
-			if api.PacketType <= MAX_PROTO_NUM {
-				return true
-			}
-			return false
-		},
-		"isGameHandler": func(api api_expr) bool {
-			if !strings.HasSuffix(api.Name, "_req") {
-				return false
-			}
-			if api.PacketType > MAX_PROTO_NUM {
-				return true
-			}
-			return false
-		},
+			},
+		}
+		tmpl, err := template.New("api.tmpl").Funcs(funcMap).ParseFiles(c.String("template"))
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = tmpl.Execute(os.Stdout, exprs)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-	tmpl, err := template.New("api.tmpl").Funcs(funcMap).ParseFiles(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = tmpl.Execute(os.Stdout, p.exprs)
-	if err != nil {
-		log.Fatal(err)
-	}
+	app.Run(os.Args)
 }

@@ -14,7 +14,7 @@ var RCode = map[int16]string{ {{range .}}
 var Handlers map[int16]func(*Session, *packet.Packet) []byte
 
 func init() {
-	Handlers = map[int16]func(*Session, *packet.Packet) []byte{ {{range .}}{{if isGameHandler .}}
+	Handlers = map[int16]func(*Session, *packet.Packet) []byte{ {{range .}}{{if isReq .}}
 		{{.PacketType}}: P_{{.Name}},{{else}}{{end}}{{end}}
 	}
 }
