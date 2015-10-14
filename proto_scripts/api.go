@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"github.com/codegangsta/cli"
 	"io"
@@ -53,18 +54,27 @@ type token struct {
 }
 
 func syntax_error(p *Parser) {
-	log.Fatal("syntax error @line:", p.lexer.lineno)
+	log.Println("syntax error @line:", p.lexer.lineno)
+	log.Println(">> \033[1;31m", p.lexer.lines[p.lexer.lineno-1], "\033[0m <<")
+	os.Exit(-1)
 }
 
 type Lexer struct {
 	reader *bytes.Buffer
+	lines  []string
 	lineno int
 }
 
 func (lex *Lexer) init(r io.Reader) {
 	bts, err := ioutil.ReadAll(r)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
+	}
+
+	// 按行读入源码
+	scanner := bufio.NewScanner(bytes.NewBuffer(bts))
+	for scanner.Scan() {
+		lex.lines = append(lex.lines, scanner.Text())
 	}
 
 	// 清除注释
