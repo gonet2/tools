@@ -14,11 +14,11 @@ import (
 )
 
 const (
-	SYMBOL = iota
-	STRUCT_BEGIN
-	STRUCT_END
-	DATA_TYPE
-	ARRAY_TYPE
+	TK_SYMBOL = iota
+	TK_STRUCT_BEGIN
+	TK_STRUCT_END
+	TK_DATA_TYPE
+	TK_ARRAY
 	TK_EOF
 )
 
@@ -116,10 +116,10 @@ func (lex *Lexer) next() (t *token) {
 			}
 			if r != '=' {
 				lex.reader.UnreadRune()
-				return &token{typ: STRUCT_BEGIN}
+				return &token{typ: TK_STRUCT_BEGIN}
 			}
 		}
-		return &token{typ: STRUCT_END}
+		return &token{typ: TK_STRUCT_END}
 	} else if unicode.IsLetter(r) {
 		var runes []rune
 		for {
@@ -138,11 +138,11 @@ func (lex *Lexer) next() (t *token) {
 		t := &token{}
 		t.literal = string(runes)
 		if datatypes[t.literal] {
-			t.typ = DATA_TYPE
+			t.typ = TK_DATA_TYPE
 		} else if t.literal == "array" {
-			t.typ = ARRAY_TYPE
+			t.typ = TK_ARRAY
 		} else {
-			t.typ = SYMBOL
+			t.typ = TK_SYMBOL
 		}
 
 		return t
@@ -193,10 +193,10 @@ func (p *Parser) expr() bool {
 	}
 	info := struct_info{}
 
-	t := p.match(SYMBOL)
+	t := p.match(TK_SYMBOL)
 	info.Name = t.literal
 
-	p.match(STRUCT_BEGIN)
+	p.match(TK_STRUCT_BEGIN)
 	p.fields(&info)
 	p.info = append(p.info, info)
 	return true
@@ -205,20 +205,20 @@ func (p *Parser) expr() bool {
 func (p *Parser) fields(info *struct_info) {
 	for {
 		t := p.lexer.next()
-		if t.typ == STRUCT_END {
+		if t.typ == TK_STRUCT_END {
 			return
 		}
-		if t.typ != SYMBOL {
+		if t.typ != TK_SYMBOL {
 			syntax_error(p)
 		}
 
 		field := field_info{Name: t.literal}
 		t = p.lexer.next()
-		if t.typ == ARRAY_TYPE {
+		if t.typ == TK_ARRAY {
 			field.Array = true
-			t = p.match(SYMBOL)
+			t = p.match(TK_SYMBOL)
 			field.Typ = t.literal
-		} else if t.typ == DATA_TYPE || t.typ == SYMBOL {
+		} else if t.typ == TK_DATA_TYPE || t.typ == TK_SYMBOL {
 			field.Typ = t.literal
 		} else {
 			syntax_error(p)
