@@ -25,10 +25,6 @@ const (
 	TK_DESC
 )
 
-const (
-	MAX_PROTO_NUM = 1000 // agent能处理的最大协议号
-)
-
 var (
 	keywords = map[string]int{
 		"packet_type": TK_TYPE,
