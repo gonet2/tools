@@ -260,8 +260,8 @@ func main() {
 		cli.StringFlag{Name: "template,t", Value: "./templates/server/proto.tmpl", Usage: "template file"},
 	}
 	app.Action = func(c *cli.Context) {
-		// load function mapping
-		f, err := os.Open("func_map.json")
+		// load primitives mapping
+		f, err := os.Open("primitives.json")
 		if err != nil {
 			log.Fatal(err)
 		}
