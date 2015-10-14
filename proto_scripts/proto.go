@@ -42,6 +42,7 @@ var (
 		"uint64":  true,
 		"int64":   true,
 		"long":    true,
+		"short":   true,
 	}
 
 	funcs map[string]lang_type
