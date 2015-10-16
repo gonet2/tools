@@ -1,5 +1,6 @@
 #!/bin/sh
 #上传numbers.xlsx到etcd
-
-d=$(base64 numbers.xlsx)
-curl http://192.168.99.100:2379/v2/keys/numbers -XPUT -d value="$d"
+FILE=numbers.xlsx
+base64 $FILE > $FILE.base64
+curl http://192.168.99.100:2379/v2/keys/numbers -XPUT --data-urlencode value@$FILE.base64
+rm $FILE.base64
