@@ -24,19 +24,15 @@ const (
 )
 
 var (
-	datatypes map[string]map[string]func_info // type -> language -> t/r/w
+	datatypes map[string]map[string]struct {
+		T string `json:"t"` // type
+		R string `json:"r"` // read
+		W string `json:"w"` // write
+	} // type -> language -> t/r/w
 )
 
 var (
 	TOKEN_EOF = &token{typ: TK_EOF}
-)
-
-type (
-	func_info struct {
-		T string `json:"t"` // type
-		R string `json:"r"` // read
-		W string `json:"w"` // write
-	}
 )
 
 type (
