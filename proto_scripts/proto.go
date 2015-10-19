@@ -192,7 +192,7 @@ func (p *Parser) expr() bool {
 
 	t := p.match(TK_SYMBOL)
 	info.Name = t.literal
-
+	p.symbols[t.literal] = true
 	p.match(TK_STRUCT_BEGIN)
 	p.fields(&info)
 	p.infos = append(p.infos, info)
@@ -209,7 +209,6 @@ func (p *Parser) fields(info *struct_info) {
 			syntax_error(p)
 		}
 
-		p.symbols[t.literal] = true
 		field := field_info{Name: t.literal}
 		t = p.lexer.next()
 		if t.typ == TK_ARRAY {
