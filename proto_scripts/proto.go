@@ -248,7 +248,7 @@ func main() {
 	app.Version = "1.0"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "file,f", Value: "./proto.txt", Usage: "input proto.txt file"},
-		cli.StringFlag{Name: "binding,b", Value: "go", Usage: "language type binding"},
+		cli.StringFlag{Name: "binding,b", Value: "go", Usage: `language type binding:"go","cs"`},
 		cli.StringFlag{Name: "template,t", Value: "./templates/server/proto.tmpl", Usage: "template file"},
 	}
 	app.Action = func(c *cli.Context) {
