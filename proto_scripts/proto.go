@@ -24,7 +24,7 @@ const (
 )
 
 var (
-	datatypes map[string]lang_type
+	datatypes map[string]map[string]func_info // type -> language -> t/r/w
 )
 
 var (
@@ -36,10 +36,6 @@ type (
 		T string `json:"t"` // type
 		R string `json:"r"` // read
 		W string `json:"w"` // write
-	}
-	lang_type struct {
-		Go func_info `json:"go"` // golang
-		Cs func_info `json:"cs"` // c#
 	}
 )
 
@@ -257,6 +253,7 @@ func main() {
 	app.Version = "1.0"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "file,f", Value: "./proto.txt", Usage: "input proto.txt file"},
+		cli.StringFlag{Name: "binding,b", Value: "go", Usage: "language type binding"},
 		cli.StringFlag{Name: "template,t", Value: "./templates/server/proto.tmpl", Usage: "template file"},
 	}
 	app.Action = func(c *cli.Context) {
@@ -286,47 +283,14 @@ func main() {
 
 		// use template to generate final output
 		funcMap := template.FuncMap{
-			"goType": func(t string) string {
-				if v, ok := datatypes[t]; ok {
-					return v.Go.T
-				} else {
-					return ""
-				}
+			"Type": func(t string) string {
+				return datatypes[t][c.String("binding")].T
 			},
-			"goRead": func(t string) string {
-				if v, ok := datatypes[t]; ok {
-					return v.Go.R
-				} else {
-					return ""
-				}
+			"Read": func(t string) string {
+				return datatypes[t][c.String("binding")].R
 			},
-			"goWrite": func(t string) string {
-				if v, ok := datatypes[t]; ok {
-					return v.Go.W
-				} else {
-					return ""
-				}
-			},
-			"csType": func(t string) string {
-				if v, ok := datatypes[t]; ok {
-					return v.Cs.T
-				} else {
-					return ""
-				}
-			},
-			"csRead": func(t string) string {
-				if v, ok := datatypes[t]; ok {
-					return v.Cs.R
-				} else {
-					return ""
-				}
-			},
-			"csWrite": func(t string) string {
-				if v, ok := datatypes[t]; ok {
-					return v.Cs.W
-				} else {
-					return ""
-				}
+			"Write": func(t string) string {
+				return datatypes[t][c.String("binding")].W
 			},
 		}
 		tmpl, err := template.New("proto.tmpl").Funcs(funcMap).ParseFiles(c.String("template"))
