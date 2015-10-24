@@ -15,8 +15,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = tmpl.Execute(os.Stdout, os.Args[1:])
+
+	f, err := os.Create("services.go")
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = tmpl.Execute(f, os.Args[1:])
+	if err != nil {
+		log.Fatal(err)
+	}
+	f.Close()
 }

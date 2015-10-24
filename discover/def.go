@@ -40,7 +40,6 @@ type service struct {
 // all services
 type service_pool struct {
 	services          map[string]*service
-	enable_name_check bool
 	client            etcdclient.Client
 	sync.RWMutex
 }
@@ -133,7 +132,7 @@ func (p *service_pool) add_service(key, value string) {
 	defer p.Unlock()
 	service_name := filepath.Dir(key)
 	// name check
-	if p.enable_name_check && !known_names[service_name] {
+	if !known_names[service_name] {
 		log.Warningf("service not in names: %v, ignored", service_name)
 		return
 	}
