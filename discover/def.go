@@ -184,7 +184,7 @@ func (p *service_pool) Get{{.}}WithId(id string) *grpc.ClientConn {
 	p.RLock()
 	defer p.RUnlock()
 	// check existence
-	service := p.services["{{.}}"]
+	service := p.services[DEFAULT_SERVICE_PATH + "/{{.}}"]
 	if service == nil {
 		return nil
 	}
@@ -211,7 +211,7 @@ func (p *service_pool) Get{{.}}() *grpc.ClientConn {
 	p.RLock()
 	defer p.RUnlock()
 	// check existence
-	service := p.services["{{.}}"]
+	service := p.services[DEFAULT_SERVICE_PATH + "/{{.}}"]
 	if service == nil {
 		return nil
 	}
@@ -230,7 +230,7 @@ func (p *service_pool) Get{{.}}() *grpc.ClientConn {
 var known_names = make(map[string]bool)
 func init() {
 	{{range .}}
-	known_names["{{.}}"] = true
+	known_names[DEFAULT_SERVICE_PATH+"/{{.}}"] = true
 	{{end}}
 	_default_pool.init()
 }
