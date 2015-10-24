@@ -133,7 +133,6 @@ func (p *service_pool) add_service(key, value string) {
 	service_name := filepath.Dir(key)
 	// name check
 	if !known_names[service_name] {
-		log.Warningf("service not in names: %v, ignored", service_name)
 		return
 	}
 
@@ -177,14 +176,15 @@ func (p *service_pool) remove_service(key string) {
 }
 
 // provide a specific key for a service, eg:
+// path:/backends/snowflake, id:s1
+//
 // the full cannonical path for this service is:
 // 			/backends/snowflake/s1
-{{range .}}
-func (p *service_pool) Get{{.}}WithId(id string) *grpc.ClientConn {
+func (p *service_pool) get_service_with_id(path string, id string) *grpc.ClientConn {
 	p.RLock()
 	defer p.RUnlock()
 	// check existence
-	service := p.services[DEFAULT_SERVICE_PATH + "/{{.}}"]
+	service := p.services[path]
 	if service == nil {
 		return nil
 	}
@@ -193,7 +193,7 @@ func (p *service_pool) Get{{.}}WithId(id string) *grpc.ClientConn {
 	}
 
 	// loop find a service with id
-	fullpath := "{{.}}" + "/" + id
+	fullpath := string(path) + "/" + id
 	for k := range service.clients {
 		if service.clients[k].key == fullpath {
 			return service.clients[k].conn
@@ -202,16 +202,14 @@ func (p *service_pool) Get{{.}}WithId(id string) *grpc.ClientConn {
 
 	return nil
 }
-{{end}}
 
 // get a service in round-robin style
 // especially useful for load-balance with state-less services
-{{range .}}
-func (p *service_pool) Get{{.}}() *grpc.ClientConn {
+func (p *service_pool) get_service(path string) *grpc.ClientConn {
 	p.RLock()
 	defer p.RUnlock()
 	// check existence
-	service := p.services[DEFAULT_SERVICE_PATH + "/{{.}}"]
+	service := p.services[path]
 	if service == nil {
 		return nil
 	}
@@ -223,6 +221,23 @@ func (p *service_pool) Get{{.}}() *grpc.ClientConn {
 	// get a service in round-robind style,
 	idx := int(atomic.AddUint32(&service.idx, 1))
 	return service.clients[idx%len(service.clients)].conn
+}
+
+
+// provide a specific key for a service, eg:
+// the full cannonical path for this service is:
+// 			/backends/snowflake/s1
+{{range .}}
+func Get{{.}}WithId(id string) *grpc.ClientConn {
+	return _default_pool.get_service_with_id(DEFAULT_SERVICE_PATH + "/{{.}}", id)
+}
+{{end}}
+
+// get a service in round-robin style
+// especially useful for load-balance with state-less services
+{{range .}}
+func Get{{.}}() *grpc.ClientConn {
+	return _default_pool.get_service(DEFAULT_SERVICE_PATH + "/{{.}}")
 }
 {{end}}
 
