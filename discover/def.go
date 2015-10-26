@@ -243,7 +243,7 @@ func Get{{.}}() *grpc.ClientConn {
 
 // bind names
 var known_names = make(map[string]bool)
-func init() {
+func Init() {
 	{{range .}}
 	known_names[DEFAULT_SERVICE_PATH+"/{{.}}"] = true
 	{{end}}
