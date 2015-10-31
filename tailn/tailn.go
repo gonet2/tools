@@ -88,7 +88,7 @@ func NSQLog(m *nsq.Message) error {
 	err := json.Unmarshal(m.Body, &info)
 	if err != nil {
 		fmt.Printf("err %v\n", err)
-		return err
+		return nil
 	}
 	fmt.Println(fmt.Sprintf(logTemplate[info.Level], info.Time.Format(LAYOUT), info.Prefix, info.Host, info.Msg, info.Caller, info.LineNo))
 	return nil
