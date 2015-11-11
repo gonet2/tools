@@ -1,16 +1,18 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/bitly/go-nsq"
-	"github.com/codegangsta/cli"
-	. "github.com/gonet2/libs/nsq-logger"
+	"io"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/bitly/go-nsq"
+	"github.com/codegangsta/cli"
+	. "github.com/gonet2/libs/nsq-logger"
+	"github.com/pquerna/ffjson/ffjson"
 )
 
 const (
@@ -74,40 +76,64 @@ var (
 			Value: "false",
 			Usage: "whether open inner log",
 		},
+		cli.StringFlag{
+			Name:  "tofile, f",
+			Value: "",
+			Usage: "output to file, defualt is write into current dir",
+		},
 	}
 )
 
 type TailHandler struct {
 	totalMessages int
 	messagesShown int
-	printMessage  func(m *nsq.Message) error
+	writer        io.Writer
+	printMessage  func(io.Writer, *nsq.Message) error
 }
 
-func NSQLog(m *nsq.Message) error {
+func NSQLog(w io.Writer, m *nsq.Message) error {
 	info := &LogFormat{}
-	err := json.Unmarshal(m.Body, &info)
+	err := ffjson.Unmarshal(m.Body, &info)
 	if err != nil {
 		fmt.Printf("err %v\n", err)
 		return nil
 	}
-	fmt.Println(fmt.Sprintf(logTemplate[info.Level], info.Time.Format(LAYOUT), info.Prefix, info.Host, info.Msg, info.Caller, info.LineNo))
-	return nil
-}
-
-func Log(m *nsq.Message) error {
-	_, err := os.Stdout.Write(m.Body)
+	_, err = fmt.Fprintln(w, fmt.Sprintf(logTemplate[info.Level], info.Time.Format(LAYOUT), info.Prefix, info.Host, info.Msg, info.Caller, info.LineNo))
 	if err != nil {
 		return err
 	}
-	_, err = os.Stdout.WriteString("\n")
-	return err
+	return nil
+}
+
+func Log(w io.Writer, m *nsq.Message) error {
+	_, err := fmt.Fprintln(w, m.Body)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func LogFile(w io.Writer, m *nsq.Message) error {
+	info := &LogFormat{}
+	err := ffjson.Unmarshal(m.Body, &info)
+	if err != nil {
+		fmt.Printf("err %v\n", err)
+		return nil
+	}
+	line := fmt.Sprintf("%v [%v] %v %v %v %v %v", info.Time.Format(LAYOUT), info.Level, info.Prefix, info.Host, info.Msg, info.Caller, info.LineNo)
+	_, err = fmt.Fprintln(w, line)
+	if err != nil {
+		return err
+	}
+	return nil
+
 }
 
 func main() {
 	myApp := cli.NewApp()
 	myApp.Name = "tailn"
 	myApp.Usage = "Tail log from nsq !"
-	myApp.Version = "0.0.1"
+	myApp.Version = "0.0.2"
 	myApp.Flags = tailFlag
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -125,8 +151,19 @@ func main() {
 		}
 
 		f := NSQLog
+		var w io.Writer = os.Stdout
 		if c.String("type") != "NSQLOG" {
 			f = Log
+		}
+
+		if c.String("tofile") != "" {
+			f = LogFile
+			fl, err := os.OpenFile(c.String("tofile"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				fmt.Printf("error %v\n", err)
+				os.Exit(0)
+			}
+			w = fl
 		}
 
 		// 屏蔽内部日志
@@ -134,7 +171,7 @@ func main() {
 			consumer.SetLogger(nil, 0)
 		}
 
-		consumer.AddHandler(&TailHandler{c.Int("number"), 0, f})
+		consumer.AddHandler(&TailHandler{c.Int("number"), 0, w, f})
 		err = consumer.ConnectToNSQDs(strings.Split(c.String("nsqd-tcp-address"), ","))
 		if err != nil {
 			fmt.Printf("error %v\n", err)
@@ -167,7 +204,7 @@ func CheckFlag(c *cli.Context) {
 
 func (th *TailHandler) HandleMessage(m *nsq.Message) error {
 	th.messagesShown++
-	if err := th.printMessage(m); err != nil {
+	if err := th.printMessage(th.writer, m); err != nil {
 		fmt.Printf("err %v\n", err)
 		return err
 	}
