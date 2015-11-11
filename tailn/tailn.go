@@ -144,6 +144,7 @@ func main() {
 		// dail timeout
 		cfg.DialTimeout = time.Duration(c.Int("timeout")) * time.Second
 		cfg.UserAgent = fmt.Sprint("go-nsq version:%v", nsq.VERSION)
+		cfg.MaxInFlight = 128
 		consumer, err := nsq.NewConsumer(c.String("topic"), c.String("channel"), cfg)
 		if err != nil {
 			fmt.Printf("error %v\n", err)
