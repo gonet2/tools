@@ -58,7 +58,7 @@ var (
 		},
 		cli.StringFlag{
 			Name:  "lookupd-http-address, l",
-			Value: "localhost:4160",
+			Value: "localhost:4161",
 			Usage: "lookupd HTTP address",
 		},
 		cli.StringFlag{
@@ -143,7 +143,7 @@ func main() {
 		cfg := nsq.NewConfig()
 		// dail timeout
 		cfg.DialTimeout = time.Duration(c.Int("timeout")) * time.Second
-		cfg.UserAgent = fmt.Sprint("go-nsq version:%v", nsq.VERSION)
+		cfg.UserAgent = fmt.Sprintf("go-nsq version:%v", nsq.VERSION)
 		cfg.MaxInFlight = 128
 		consumer, err := nsq.NewConsumer(c.String("topic"), c.String("channel"), cfg)
 		if err != nil {
