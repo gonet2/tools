@@ -240,12 +240,13 @@ func main() {
 	app.Name = "Protocol Handler Generator"
 	app.Usage = "handle api.txt"
 	app.Authors = []cli.Author{{Name: "xtaci"}, {Name: "ycs"}}
-	app.Version = "1.0"
+	app.Version = "1.1"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "file,f", Value: "./api.txt", Usage: "input api.txt file"},
 		cli.IntFlag{Name: "min_proto,min", Value: 0, Usage: "minimum proto number"},
 		cli.IntFlag{Name: "max_proto,max", Value: 1000, Usage: "maximum proto number"},
 		cli.StringFlag{Name: "template,t", Value: "./templates/server/api.tmpl", Usage: "template file"},
+		cli.StringFlag{Name: "pkgname", Value: "agent", Usage: "package name to prefix"},
 	}
 	app.Action = func(c *cli.Context) error {
 		// parse
@@ -276,7 +277,12 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = tmpl.Execute(os.Stdout, p.exprs)
+		args := struct {
+			PackageName string
+			Exprs       []api_expr
+		}{c.String("pkgname"), p.exprs}
+
+		err = tmpl.Execute(os.Stdout, args)
 		if err != nil {
 			log.Fatal(err)
 		}

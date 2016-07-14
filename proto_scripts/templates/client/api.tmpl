@@ -8,7 +8,7 @@ namespace NetProto.Api
 {
     public enum ENetMsgId
     {
-        {{- range .}}
+        {{- range .Exprs}}
         {{.Name}} = {{.PacketType}}, // {{.Desc}}
         {{- end}}
     };

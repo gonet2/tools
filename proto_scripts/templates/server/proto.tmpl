@@ -2,8 +2,8 @@
 // DO NOT EDIT!
 package client_handler
 
-import "misc/packet"
-{{range .}}
+import "{{.PackageName}}/misc/packet"
+{{range .Infos}}
 type S_{{.Name}} struct {
 	{{- range $f := .Fields}}
 	{{- with Type $f.Typ}}

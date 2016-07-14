@@ -2,17 +2,17 @@
 // DO NOT EDIT!
 package client_handler
 
-import "misc/packet"
-import . "types"
+import "{{.PackageName}}/misc/packet"
+import . "{{.PackageName}}/types"
 
 var Code = map[string]int16{
-	{{- range .}}
+	{{- range .Exprs}}
 	"{{.Name}}": {{.PacketType}}, // {{.Desc}}
 	{{- end}}
 }
 
 var RCode = map[int16]string{
-	{{- range .}}
+	{{- range .Exprs}}
 	{{.PacketType}}: "{{.Name}}", // {{.Desc}}
 	{{- end}}
 }
@@ -21,7 +21,7 @@ var Handlers map[int16]func(*Session, *packet.Packet) []byte
 
 func init() {
 	Handlers = map[int16]func(*Session, *packet.Packet) []byte{
-		{{- range .}}
+		{{- range .Exprs}}
 		{{- if isReq .}}
 		{{.PacketType}}: P_{{.Name}},
 		{{- end}}

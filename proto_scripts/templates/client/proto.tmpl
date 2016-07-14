@@ -11,7 +11,7 @@ namespace NetProto.Proto
         public short NetMsgId;
         public abstract void Pack(ByteArray w);
     }
-{{range .}}
+{{range .Infos}}
     public class {{.Name}} : NetBase
     {
         {{- range $f := .Fields}}
