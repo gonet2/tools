@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"github.com/codegangsta/cli"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"text/template"
 	"unicode"
+
+	"github.com/urfave/cli"
 )
 
 const (
@@ -246,7 +247,7 @@ func main() {
 		cli.IntFlag{Name: "max_proto,max", Value: 1000, Usage: "maximum proto number"},
 		cli.StringFlag{Name: "template,t", Value: "./templates/server/api.tmpl", Usage: "template file"},
 	}
-	app.Action = func(c *cli.Context) {
+	app.Action = func(c *cli.Context) error {
 		// parse
 		file, err := os.Open(c.String("file"))
 		if err != nil {
@@ -279,6 +280,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		return nil
 	}
 	app.Run(os.Args)
 }

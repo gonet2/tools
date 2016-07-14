@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"github.com/codegangsta/cli"
 	"io"
 	"io/ioutil"
 	"log"
@@ -12,6 +11,8 @@ import (
 	"regexp"
 	"text/template"
 	"unicode"
+
+	"github.com/urfave/cli"
 )
 
 const (
@@ -251,7 +252,7 @@ func main() {
 		cli.StringFlag{Name: "binding,b", Value: "go", Usage: `language type binding:"go","cs"`},
 		cli.StringFlag{Name: "template,t", Value: "./templates/server/proto.tmpl", Usage: "template file"},
 	}
-	app.Action = func(c *cli.Context) {
+	app.Action = func(c *cli.Context) error {
 		// load primitives mapping
 		f, err := os.Open("primitives.json")
 		if err != nil {
@@ -296,6 +297,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		return nil
 	}
 	app.Run(os.Args)
 }
